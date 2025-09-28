@@ -1,11 +1,16 @@
 import React from "react";
-import RegisterPage from "./pages/RegisterPage";
+import CustomerRegisterPage from "./pages/CustomerRegisterPage";
+import { BrowserRouter,Routes, Route } from "react-router-dom";
+import AdminRegisterPage from "./pages/AdminRegisterPage";
 
-function App() {
+const App = () => {
   return (
-    <div>
-      <RegisterPage />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/CustomerRegister" element={<CustomerRegisterPage />} />
+        <Route path="/AdminRegister" element={<AdminRegisterPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

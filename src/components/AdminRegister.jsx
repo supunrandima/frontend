@@ -1,14 +1,17 @@
 import React, { useState } from "react";
-import { registerCustomer } from "../services/customerService";
+import { registerAdmin } from "../services/AdminService";
 
 
-const CustomerRegister = () => {
+const AdminRegister = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    phone: "",
+    username: "",
+    password: "",
     email: "",
-    birthday: "",
+    phone: "",
+    address: "",
+    role: "",
   });
 
   const [message, setMessage] = useState("");
@@ -23,25 +26,28 @@ const CustomerRegister = () => {
     e.preventDefault();
 
     // Convert birthday to LocalDateTime string format (YYYY-MM-DDTHH:mm:ss)
-    const formattedData = {
-      ...formData,
-      birthday: formData.birthday ? formData.birthday + "T00:00:00" : null,
-    };
+    // const formattedData = {
+    //   ...formData,
+    //   birthday: formData.birthday ? formData.birthday + "T00:00:00" : null,
+    // };
 
     try {
-      const response = await registerCustomer(formattedData);
+      const response = await registerAdmin(formData);
       setMessage(
         `Registration successful! Welcome, ${response.data.firstName}`
       );
       setFormData({
         firstName: "",
         lastName: "",
-        phone: "",
+        username: "",
+        password: "",
         email: "",
-        birthday: "",
+        phone: "",
+        address: "",
+        role: "",
       });
     } catch (error) {
-      setMessage(error.response?.data?.message || "Error registering customer.");
+      setMessage(error.response?.data?.message || "Error registering Admin.");
     }
   };
 
@@ -49,7 +55,7 @@ const CustomerRegister = () => {
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="bg-white p-6 rounded-2xl shadow-md w-96">
         <h2 className="text-2xl font-bold mb-4 text-center">
-          Customer Registration
+          Admin Registration
         </h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
@@ -72,10 +78,19 @@ const CustomerRegister = () => {
           />
           <input
             type="text"
-            name="phone"
-            placeholder="Phone Number"
+            name="username"
+            placeholder="User Name"
             className="w-full p-2 border rounded"
-            value={formData.phone}
+            value={formData.username}
+            onChange={handleChange}
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            className="w-full p-2 border rounded"
+            value={formData.password}
             onChange={handleChange}
             required
           />
@@ -89,11 +104,21 @@ const CustomerRegister = () => {
             required
           />
           <input
-            type="date"
-            name="birthday"
-            placeholder="Birthday"
+            type="text"
+            name="phone"
+            placeholder="Phone Number"
             className="w-full p-2 border rounded"
-            value={formData.birthday}
+            value={formData.phone}
+            onChange={handleChange}
+            required
+          />
+          
+          <input
+            type="text"
+            name="address"
+            placeholder="Address"
+            className="w-full p-2 border rounded"
+            value={formData.address}
             onChange={handleChange}
             required
           />
@@ -110,5 +135,5 @@ const CustomerRegister = () => {
   );
 }
 
-export default CustomerRegister
+export default AdminRegister
 

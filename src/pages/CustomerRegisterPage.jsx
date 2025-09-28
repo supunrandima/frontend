@@ -1,10 +1,13 @@
 import React from "react";
 import CustomerRegister from "../components/CustomerRegister";
 
-export default function RegisterPage() {
+const CustomerRegisterPage = () => {
   return (
     <div>
-      <CustomerRegister />
+      <CustomerRegister/>
     </div>
-  );
+  )
 }
+
+export default CustomerRegisterPage
+
