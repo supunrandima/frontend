@@ -1,5 +1,5 @@
 import React from 'react'
-import CustomerLogin from '../components/CustomerLogin'
+import CustomerLogin from '../../components/customer/CustomerLogin'
 
 const CustomerLoginPage = () => {
   return (

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { registerAdmin } from "../services/adminService";
+import { registerAdmin } from "../../services/adminService";
 import { Eye, EyeOff, User, Mail, Phone, MapPin, Lock, UserPlus, CheckCircle, AlertCircle } from "lucide-react";
 
 const AdminRegister = () => {

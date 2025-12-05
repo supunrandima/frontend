@@ -1,11 +1,15 @@
 import React from "react";
-import CustomerRegisterPage from "./pages/CustomerRegisterPage";
+import CustomerRegisterPage from "./pages/customerUI/CustomerRegisterPage";
 import { BrowserRouter,Routes, Route } from "react-router-dom";
-import AdminRegisterPage from "./pages/AdminRegisterPage";
+import AdminRegisterPage from "./pages/adminUI/AdminRegisterPage";
 import HomePage from "./pages/HomePage";
-import CustomerLoginPage from "./pages/CustomerLoginPage";
+import CustomerLoginPage from "./pages/customerUI/CustomerLoginPage";
 import MenuPage from "./pages/MenuPage";
-import AdminLoginPage from "./pages/AdminLoginPage";
+import AdminLoginPage from "./pages/adminUI/AdminLoginPage";
+import AdminDashboardPage from "./pages/adminUI/AdminDashboardPage";
+import StaffLoginPage from "./pages/staffUI/StaffLoginPage";
+import KitchenDashboard from "./components/staff/KitchenDashboard";
+
 
 const App = () => {
   return (
@@ -17,6 +21,10 @@ const App = () => {
         <Route path="/customerLogin" element={<CustomerLoginPage />} />
         <Route path="/adminLogin" element={<AdminLoginPage />} />
         <Route path="/menu" element={<MenuPage />} />
+        <Route path="/adminDashboard" element={<AdminDashboardPage />} />
+
+        <Route path="/staffLogin" element={<StaffLoginPage />} />
+        <Route path="/kitchenDashboard" element={<KitchenDashboard/>} />
       </Routes>
     </BrowserRouter>
   );

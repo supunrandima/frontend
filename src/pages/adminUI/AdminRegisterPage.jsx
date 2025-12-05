@@ -1,5 +1,5 @@
 import React from "react";
-import AdminRegister from "../components/AdminRegister";
+import AdminRegister from "../../components/admin/AdminRegister";
 
 
 const AdminRegisterPage = () => {
