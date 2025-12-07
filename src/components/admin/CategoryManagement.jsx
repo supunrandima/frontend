@@ -1,21 +1,15 @@
-// src/components/admin/CategoryManagement.jsx
 import React, { useState, useEffect } from "react";
 import { Plus, Edit3, Trash2, List, ClipboardList, AlertCircle, CheckCircle, Save, Loader2 } from "lucide-react";
-// Assuming you have categoryService.js in src/services
 import { getAllCategories, addCategory, updateCategory, deleteCategory } from "../../services/categoryService"; 
-
-// The 'uuid' library is typically used for generating unique local keys, but for 
-// categories, we'll rely on the backend for the ObjectId, so we'll remove local uuid usage.
 
 const CategoryManagement = ({ onBack }) => {
   const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState({ name: "", categoryCode: "" }); // Changed 'code' to 'categoryCode' to match Java Entity
+  const [newCategory, setNewCategory] = useState({ name: "", categoryCode: "" });
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [isLoading, setIsLoading] = useState(false);
-  const [isFormLoading, setIsFormLoading] = useState(false); // Separate loading for form submissions
+  const [isFormLoading, setIsFormLoading] = useState(false); 
 
-  // Styles from index.css or customer/AdminLogin for consistency
   const inputStyle = (hasError) => `w-full px-4 py-2 border rounded-lg focus:ring-2 transition-all placeholder-gray-500 text-gray-800 ${
     hasError ? "border-red-500" : "border-gray-300 focus:ring-red-500/50"
   }`;
@@ -26,7 +20,6 @@ const CategoryManagement = ({ onBack }) => {
     setMessage({ type: "", text: "" });
     try {
       const response = await getAllCategories();
-      // The backend returns a list of CategoryDTOs
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -41,8 +34,6 @@ const CategoryManagement = ({ onBack }) => {
   }, []);
 
   // --- Validation and Error Utilities ---
-
-  // Check if the form is valid client-side
   const validateForm = () => {
     if (!newCategory.name.trim() || !newCategory.categoryCode.trim()) {
       setMessage({ type: "error", text: "Name and Category Code are required." });
@@ -56,14 +47,11 @@ const CategoryManagement = ({ onBack }) => {
     return true;
   };
   
-  // Helper to extract error message from axios response
   const getErrorMessage = (error) => {
-    // Check for the backend's specific error structure: { error: "..." }
     return error.response?.data?.error || "An unexpected error occurred.";
   };
 
   // --- CRUD Functions ---
-
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -90,7 +78,6 @@ const CategoryManagement = ({ onBack }) => {
     setIsFormLoading(true);
     setMessage({ type: "", text: "" });
     
-    // Create payload with only updatable fields
     const payload = {
         name: newCategory.name,
         categoryCode: newCategory.categoryCode 
@@ -98,7 +85,6 @@ const CategoryManagement = ({ onBack }) => {
 
     try {
       const response = await updateCategory(id, payload);
-      // Backend returns the updated DTO (response.data)
       setCategories(
         categories.map((cat) => (cat.categoryId === id ? response.data : cat))
       );
@@ -121,7 +107,6 @@ const CategoryManagement = ({ onBack }) => {
     setMessage({ type: "", text: "" });
 
     try {
-        // Backend returns 204 No Content on success
         await deleteCategory(id);
         setCategories(categories.filter((cat) => cat.categoryId !== id));
         setMessage({ type: "success", text: `Category "${name}" deleted.` });
@@ -131,8 +116,6 @@ const CategoryManagement = ({ onBack }) => {
         if (error.response?.status === 404) {
             errorMessage = "Category not found or already deleted.";
         }
-        // NOTE: In a robust system, the backend should check for linked MenuItems
-        // and return a 409 Conflict if items still exist in this category.
         setMessage({ type: "error", text: errorMessage });
     } finally {
         setIsLoading(false);
@@ -141,7 +124,6 @@ const CategoryManagement = ({ onBack }) => {
 
   const startEdit = (category) => {
     setEditingId(category.categoryId);
-    // Note: The categoryId from the DTO is an ObjectId string.
     setNewCategory({ name: category.name, categoryCode: category.categoryCode });
     setMessage({ type: "", text: "" }); 
   };
@@ -152,7 +134,6 @@ const CategoryManagement = ({ onBack }) => {
     setMessage({ type: "", text: "" });
   };
 
-  // Check for client-side errors to highlight input fields
   const hasNameError = message.type === 'error' && message.text.includes('name');
   const hasCodeError = message.type === 'error' && message.text.includes('Code');
 
@@ -187,8 +168,18 @@ const CategoryManagement = ({ onBack }) => {
         </div>
       )}
 
-      {/* Add/Edit Form */}
-      <form onSubmit={editingId ? (e) => handleUpdateCategory(editingId) : handleAddCategory} className="mb-8 p-6 border rounded-xl bg-gray-50 card-shadow">
+      {/* FIXED FORM SUBMISSION LOGIC */}
+      <form 
+        onSubmit={(e) => {
+            if (editingId) {
+                e.preventDefault(); // Prevent reload
+                handleUpdateCategory(editingId); // Pass the ID from state
+            } else {
+                handleAddCategory(e);
+            }
+        }} 
+        className="mb-8 p-6 border rounded-xl bg-gray-50 card-shadow"
+      >
         <h3 className="text-xl font-semibold text-gray-700 mb-4">{editingId ? 'Edit Category' : 'Add New Category'}</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div className="md:col-span-2">

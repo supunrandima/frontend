@@ -25,6 +25,7 @@ const App = () => {
 
         <Route path="/staffLogin" element={<StaffLoginPage />} />
         <Route path="/kitchenDashboard" element={<KitchenDashboard/>} />
+
       </Routes>
     </BrowserRouter>
   );
