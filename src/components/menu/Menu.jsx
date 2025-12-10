@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getAllCategories, getAllMenuItems } from "../../services/menuService";
+import { getAllCategories } from "../../services/categoryService";
+import { getAllMenuItems } from "../../services/menuItemService";
 import { Plus, Loader2, UtensilsCrossed } from "lucide-react";
 import MenuNavbar from "./MenuNavbar";
 

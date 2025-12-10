@@ -1,69 +1,41 @@
 // src/components/admin/AdminDashboard.jsx
-import React, { useState } from "react";
-import { LogOut, LayoutDashboard, Utensils, Users, ClipboardList, BarChart3, ChevronLeft, Menu } from "lucide-react";
+import { BarChart3, ChevronLeft, ClipboardList, LayoutDashboard, LogOut, Menu, Users, Utensils } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CategoryManagement from "./CategoryManagement"; // Assumes file is in the same folder
-import StaffManagement from "./StaffManagement"; // Assumes file is in the same folder
+
+// --- Imported Management Components ---
+import CategoryManagement from "./CategoryManagement";
+import StaffManagement from "./StaffManagement";
+import MenuItemManagement from "./MenuItemManagement";
+
 
 // --- Sub-Components ---
 
-// 1. Menu Management Component
+// 1. Menu Management Wrapper
+// This component switches between the Item List (MenuItemManagement) and Category List (CategoryManagement)
 const MenuManagement = () => {
-  // State to switch between Menu Item view and Category Management view
   const [view, setView] = useState("items"); // 'items' or 'categories'
 
   if (view === "categories") {
     return <CategoryManagement onBack={() => setView("items")} />;
   }
 
-  // Default view: Menu Item Management
   return (
-    <div className="p-6 bg-white rounded-xl shadow-lg h-full">
-      <h2 className="text-2xl font-bold gradient-text mb-4">Menu Management</h2>
-      <p className="text-gray-600 mb-4">Configure categories, add new dishes, update prices, and manage item availability.</p>
-      
-      <div className="space-y-4">
-          {/* Actions Section */}
-          <div className="flex flex-wrap gap-4">
-              <button className="btn-primary flex items-center gap-2">
-                  <Utensils className="w-5 h-5" /> Add New Item
-              </button>
-              <button 
-                  className="btn-secondary flex items-center gap-2"
-                  onClick={() => setView("categories")}
-              >
-                  <ClipboardList className="w-5 h-5" /> Manage Categories
-              </button>
-          </div>
-
-          {/* Placeholder Table for Menu Items */}
-          <div className="border border-gray-200 rounded-xl overflow-hidden">
-              <div className="p-3 font-semibold bg-gray-50 border-b text-gray-700 grid grid-cols-4">
-                  <span>Item Name</span>
-                  <span>Category</span>
-                  <span>Price</span>
-                  <span>Actions</span>
-              </div>
-              <div className="p-3 grid grid-cols-4 hover:bg-red-50/50 transition-colors">
-                  <span>Spicy Chicken Burger</span>
-                  <span>10 (Burgers)</span>
-                  <span>$12.99</span>
-                  <span className="text-sm space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800">Edit</button>
-                      <button className="text-red-600 hover:text-red-800">Delete</button>
-                  </span>
-              </div>
-              <div className="p-3 grid grid-cols-4 hover:bg-red-50/50 transition-colors">
-                  <span>Diet Coke (Item Code: 20001)</span>
-                  <span>20 (Drinks)</span>
-                  <span>$2.50</span>
-                  <span className="text-sm space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800">Edit</button>
-                      <button className="text-red-600 hover:text-red-800">Delete</button>
-                  </span>
-              </div>
-          </div>
+    <div className="h-full flex flex-col relative">
+      {/* Floating Switch Button */}
+      {/* Positioned absolutely to sit on top of the MenuItemManagement header */}
+      <div className="absolute top-6 right-6 z-10">
+        <button 
+          onClick={() => setView("categories")}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:text-[#FF3131] hover:border-[#FF3131]/30 transition-all"
+        >
+          <ClipboardList className="w-4 h-4" />
+          Manage Categories
+        </button>
       </div>
+
+      {/* Main Item Manager */}
+      <MenuItemManagement />
     </div>
   );
 };
@@ -129,7 +101,6 @@ const AdminDashboard = () => {
       case "menu":
         return <MenuManagement />;
       case "staff":
-        // Using the imported StaffManagement component
         return <StaffManagement />;
       case "customer":
         return <CustomerManagement />;
