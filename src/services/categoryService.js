@@ -17,22 +17,18 @@ const authHeader = () => {
     : {};
 };
 
-// ✅ GET ALL
 export const getAllCategories = () => {
   return axios.get(`${API_URL}/allCategories`, authHeader());
 };
 
-// ✅ ADD
 export const addCategory = (data) => {
   return axios.post(`${API_URL}/newCategory`, data, authHeader());
 };
 
-// ✅ UPDATE
 export const updateCategory = (id, data) => {
   return axios.put(`${API_URL}/${id}`, data, authHeader());
 };
 
-// ✅ DELETE
 export const deleteCategory = (id) => {
   return axios.delete(`${API_URL}/${id}`, authHeader());
 };

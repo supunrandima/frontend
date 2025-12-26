@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit3, Trash2, X, Search, Image, DollarSign, FileText, Tag, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import { getAllMenuItems, addMenuItem, updateMenuItem, deleteMenuItem, searchMenuItems } from "../../services/menuItemService";
+import { getAllMenuItems, addMenuItem, updateMenuItem, deleteMenuItem } from "../../services/menuItemService";
 import { getAllCategories } from "../../services/categoryService";
 
 const MenuItemManagement = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [view, setView] = useState("list"); // 'list', 'form'
+  const [view, setView] = useState("list");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [isEditing, setIsEditing] = useState(false);
@@ -25,7 +25,6 @@ const MenuItemManagement = () => {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  // --- 1. Load Data (Items & Categories) ---
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -37,7 +36,7 @@ const MenuItemManagement = () => {
       setCategories(catsResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setMessage({ type: "error", text: "Failed to load menu data." });
+      setMessage({ type: "error", text: "Failed to load data." });
     } finally {
       setIsLoading(false);
     }
@@ -47,44 +46,49 @@ const MenuItemManagement = () => {
     fetchData();
   }, []);
 
-  // --- 2. Search Handler ---
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (searchQuery.trim()) {
-        try {
-          const response = await searchMenuItems(searchQuery);
-          setMenuItems(response.data);
-        } catch (error) {
-          console.error("Search error:", error);
+  const generateItemCode = (categoryName) => {
+    const selectedCat = categories.find(c => c.name === categoryName);
+    if (!selectedCat) return "";
+
+    const catCode = selectedCat.categoryCode; 
+
+    const categoryItems = menuItems.filter(item => item.itemCode.startsWith(catCode));
+
+    let maxSeq = 0;
+    categoryItems.forEach(item => {
+        // Extract last 3 digits: "10005" -> "005" -> 5
+        const seqPart = parseInt(item.itemCode.substring(2)); 
+        if (!isNaN(seqPart) && seqPart > maxSeq) {
+            maxSeq = seqPart;
         }
-      } else {
-        // If search is cleared, reload all items
-        const response = await getAllMenuItems();
-        setMenuItems(response.data);
-      }
-    }, 500); // 500ms delay
+    });
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+    const nextSeq = maxSeq + 1;
+    const nextSeqString = nextSeq.toString().padStart(3, '0');
 
-  // --- 3. Form Handling ---
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    return `${catCode}${nextSeqString}`;
   };
 
-  const validateForm = () => {
-    if (!formData.name || !formData.category || !formData.price) return "Name, Category, and Price are required.";
-    if (formData.itemCode.length !== 4) return "Item Code must be exactly 4 characters.";
-    if (parseFloat(formData.price) <= 0) return "Price must be a positive value.";
-    return null;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === "category") {
+        if (!isEditing) {
+            const newItemCode = generateItemCode(value);
+            setFormData({ ...formData, category: value, itemCode: newItemCode });
+        } else {
+             const newItemCode = generateItemCode(value);
+             setFormData({ ...formData, category: value, itemCode: newItemCode });
+        }
+    } else {
+        setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const error = validateForm();
-    if (error) {
-        setMessage({ type: "error", text: error });
+    if (!formData.name || !formData.category || !formData.price) {
+        setMessage({ type: "error", text: "Name, Category, and Price are required." });
         return;
     }
 
@@ -99,12 +103,11 @@ const MenuItemManagement = () => {
             await addMenuItem(formData);
             setMessage({ type: "success", text: "New menu item added successfully!" });
         }
-        await fetchData(); // Refresh list
+        await fetchData(); 
         setView("list");
         setFormData(initialFormState);
     } catch (err) {
-        const errorMsg = err.response?.data?.error || "Operation failed. Please try again.";
-        setMessage({ type: "error", text: errorMsg });
+        setMessage({ type: "error", text: err.response?.data?.error || "Operation failed." });
     } finally {
         setIsLoading(false);
     }
@@ -118,111 +121,96 @@ const MenuItemManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this menu item? This cannot be undone.")) return;
-    
+    if (!window.confirm("Delete this menu item?")) return;
     try {
         await deleteMenuItem(id);
         setMenuItems(menuItems.filter(item => item.itemId !== id));
-        setMessage({ type: "success", text: "Menu item deleted." });
+        setMessage({ type: "success", text: "Item deleted." });
     } catch (error) {
-        console.error("Error deleting menu items", error);
+        console.error("Error deleting items", error);
         setMessage({ type: "error", text: "Failed to delete item." });
     }
   };
 
   // --- UI Components ---
-
   const renderForm = () => (
     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 animate-fade-in">
         <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-gray-800">
-                {isEditing ? "Edit Menu Item" : "Add New Menu Item"}
-            </h3>
-            <button 
-                onClick={() => setView("list")}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-                <X className="w-5 h-5 text-gray-500" />
-            </button>
+            <h3 className="text-xl font-bold text-gray-800">{isEditing ? "Edit Menu Item" : "Add New Menu Item"}</h3>
+            <button onClick={() => setView("list")} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X className="w-5 h-5 text-gray-500" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Row 1: Name & Item Code */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" 
-                        placeholder="e.g., Spicy Burger" required />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Code (4 chars)</label>
-                    <div className="relative">
-                        <Tag className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-                        <input type="text" name="itemCode" value={formData.itemCode} onChange={handleInputChange}
-                            maxLength="4"
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" 
-                            placeholder="1001" required />
-                    </div>
-                </div>
-            </div>
-
-            {/* Row 2: Category & Price */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                     <select name="category" value={formData.category} onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none bg-white" required>
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] bg-white outline-none" required>
                         <option value="">Select Category</option>
                         {categories.map((cat) => (
-                            <option key={cat.categoryId} value={cat.name}>{cat.name}</option>
+                            <option key={cat.categoryId} value={cat.name}>{cat.name} ({cat.categoryCode})</option>
                         ))}
                     </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Code (Auto)</label>
+                    <div className="relative">
+                        <Tag className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                        <input type="text" name="itemCode" value={formData.itemCode} readOnly
+                            className="w-full pl-10 pr-4 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500 font-mono outline-none cursor-not-allowed" 
+                            placeholder="Select category first" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                    <input type="text" name="name" value={formData.name} onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" required />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
                     <div className="relative">
                         <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                         <input type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" 
-                            placeholder="12.99" required />
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" required />
                     </div>
                 </div>
             </div>
 
-            {/* Row 3: Image URL & Status */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                     <div className="relative">
                         <Image className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                         <input type="text" name="imageUrl" value={formData.imageUrl} onChange={handleInputChange}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" 
-                            placeholder="https://example.com/image.jpg" />
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" />
                     </div>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select name="status" value={formData.status} onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none bg-white">
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] bg-white outline-none">
                         <option value="Available">Available</option>
                         <option value="Out of Stock">Out of Stock</option>
                     </select>
                 </div>
             </div>
 
-            {/* Description */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <div className="relative">
-                    <FileText className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                    <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3"
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none resize-none"
-                        placeholder="Delicious beef patty with cheese..." required />
-                </div>
+                <textarea 
+                name="description" 
+                value={formData.description} 
+                onChange={handleInputChange} 
+                rows="3"
+                maxLength="100" 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none resize-none" 
+                required 
+            />
             </div>
 
-            {/* Actions */}
             <div className="flex gap-4 pt-2">
                 <button type="submit" disabled={isLoading}
                     className="flex-1 bg-gradient-to-r from-[#FF3131] to-[#FF914D] text-white py-2.5 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50">
@@ -239,7 +227,6 @@ const MenuItemManagement = () => {
 
   return (
     <div className="h-full flex flex-col">
-        {/* Message Alert */}
         {message.text && (
             <div className={`mb-4 p-4 rounded-xl flex items-center gap-3 animate-fade-in ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                 {message.type === 'success' ? <CheckCircle className="w-5 h-5"/> : <AlertCircle className="w-5 h-5"/>}

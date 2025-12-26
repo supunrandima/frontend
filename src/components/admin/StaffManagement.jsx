@@ -5,7 +5,7 @@ import { getAllStaff, registerStaff, updateStaff, deleteStaff } from "../../serv
 
 const StaffManagement = () => {
   const [staffList, setStaffList] = useState([]);
-  const [view, setView] = useState("list"); // 'list', 'form'
+  const [view, setView] = useState("list"); 
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   
@@ -18,14 +18,13 @@ const StaffManagement = () => {
     password: "",
     phone: "",
     address: "",
-    role: "KITCHEN", // Default role
+    role: "KITCHEN", 
     status: "ACTIVE"
   };
   
   const [formData, setFormData] = useState(initialFormState);
   const [isEditing, setIsEditing] = useState(false);
 
-  // --- Data Fetching ---
   const fetchStaff = async () => {
     setIsLoading(true);
     try {
@@ -43,7 +42,7 @@ const StaffManagement = () => {
     fetchStaff();
   }, []);
 
-  // --- Form Handling ---
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -52,7 +51,6 @@ const StaffManagement = () => {
   const validateForm = () => {
     if (!formData.firstName || !formData.lastName || !formData.staffId) return "Name and Staff ID are required.";
     if (!isEditing && !formData.password) return "Password is required for new staff.";
-    // Regex matching backend: ^[+]?[0-9]{10,15}$
     const phonePattern = /^[+]?[0-9]{10,15}$/;
     if (!phonePattern.test(formData.phone)) return "Invalid phone number (10-15 digits required).";
     return null;
@@ -91,7 +89,7 @@ const StaffManagement = () => {
   const handleEdit = (staff) => {
     setFormData({
         ...staff,
-        password: "" // Don't populate password
+        password: "" 
     });
     setIsEditing(true);
     setView("form");
@@ -106,6 +104,7 @@ const StaffManagement = () => {
         setStaffList(staffList.filter(s => s.id !== id));
         setMessage({ type: "success", text: "Staff member deleted." });
     } catch (error) {
+        console.error=("Error deleting staff:", error);
         setMessage({ type: "error", text: "Failed to delete staff." });
     }
   };

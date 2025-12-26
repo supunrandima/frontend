@@ -14,16 +14,38 @@ const CategoryManagement = ({ onBack }) => {
     hasError ? "border-red-500" : "border-gray-300 focus:ring-red-500/50"
   }`;
   
-  // --- Data Fetching ---
+  const generateNextCategoryCode = (currentCategories) => {
+    if (!currentCategories || currentCategories.length === 0) return "01";
+
+
+    const codes = currentCategories.map(cat => parseInt(cat.categoryCode, 10)).filter(n => !isNaN(n));
+    
+    if (codes.length === 0) return "01";
+
+    const maxCode = Math.max(...codes);
+    const nextCode = maxCode + 1;
+
+    if (nextCode > 99) {
+        return "";
+    }
+
+    return nextCode.toString().padStart(2, '0');
+  };
+
   const fetchCategories = async () => {
     setIsLoading(true);
     setMessage({ type: "", text: "" });
     try {
       const response = await getAllCategories();
-      setCategories(response.data);
+      const fetchedCategories = response.data;
+      setCategories(fetchedCategories);
+      
+      const nextCode = generateNextCategoryCode(fetchedCategories);
+      setNewCategory(prev => ({ ...prev, categoryCode: nextCode }));
+
     } catch (error) {
       console.error("Error fetching categories:", error);
-      setMessage({ type: "error", text: "Failed to load categories. Please check internet connection." });
+      setMessage({ type: "error", text: "Failed to load categories." });
     } finally {
       setIsLoading(false);
     }
@@ -33,16 +55,14 @@ const CategoryManagement = ({ onBack }) => {
     fetchCategories();
   }, []);
 
-  // --- Validation and Error Utilities ---
   const validateForm = () => {
-    if (!newCategory.name.trim() || !newCategory.categoryCode.trim()) {
-      setMessage({ type: "error", text: "Name and Category Code are required." });
+    if (!newCategory.name.trim()) {
+      setMessage({ type: "error", text: "Name is required." });
       return false;
     }
-    const codePattern = /^[0-9]{2}$/;
-    if (!newCategory.categoryCode.match(codePattern)) {
-      setMessage({ type: "error", text: "Category Code must be exactly 2 numeric digits (e.g., 10)." });
-      return false;
+    if (!newCategory.categoryCode) {
+        setMessage({ type: "error", text: "Category Code is invalid or limit reached." });
+        return false;
     }
     return true;
   };
@@ -51,7 +71,8 @@ const CategoryManagement = ({ onBack }) => {
     return error.response?.data?.error || "An unexpected error occurred.";
   };
 
-  // --- CRUD Functions ---
+  // CRUD Functions
+
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -61,8 +82,15 @@ const CategoryManagement = ({ onBack }) => {
 
     try {
       const response = await addCategory(newCategory);
-      setCategories([...categories, response.data]);
-      setNewCategory({ name: "", categoryCode: "" });
+      
+      const updatedList = [...categories, response.data];
+      setCategories(updatedList);
+      
+      const nextCode = generateNextCategoryCode(updatedList);
+      
+
+      setNewCategory({ name: "", categoryCode: nextCode });
+      
       setMessage({ type: "success", text: `Category "${response.data.name}" added successfully.` });
     } catch (error) {
       const errorMessage = getErrorMessage(error);
@@ -73,7 +101,10 @@ const CategoryManagement = ({ onBack }) => {
   };
 
   const handleUpdateCategory = async (id) => {
-    if (!validateForm()) return;
+    if (!newCategory.name.trim()) {
+        setMessage({ type: "error", text: "Name is required." });
+        return;
+    }
     
     setIsFormLoading(true);
     setMessage({ type: "", text: "" });
@@ -85,10 +116,14 @@ const CategoryManagement = ({ onBack }) => {
 
     try {
       const response = await updateCategory(id, payload);
-      setCategories(
-        categories.map((cat) => (cat.categoryId === id ? response.data : cat))
-      );
-      cancelEdit();
+      
+      const updatedList = categories.map((cat) => (cat.categoryId === id ? response.data : cat));
+      setCategories(updatedList);
+      
+      setEditingId(null);
+      const nextCode = generateNextCategoryCode(updatedList);
+      setNewCategory({ name: "", categoryCode: nextCode });
+
       setMessage({ type: "success", text: `Category updated successfully.` });
     } catch (error) {
       const errorMessage = getErrorMessage(error);
@@ -99,19 +134,24 @@ const CategoryManagement = ({ onBack }) => {
   };
 
   const handleDeleteCategory = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete the category: ${name}? This cannot be undone.`)) {
-        return;
-    }
+    if (!window.confirm(`Delete category: ${name}?`)) return;
 
     setIsLoading(true);
     setMessage({ type: "", text: "" });
 
     try {
         await deleteCategory(id);
-        setCategories(categories.filter((cat) => cat.categoryId !== id));
+        const updatedList = categories.filter((cat) => cat.categoryId !== id);
+        setCategories(updatedList);
+        
+        // Recalculate next code if we are currently in "Add" mode
+        if (!editingId) {
+            const nextCode = generateNextCategoryCode(updatedList);
+            setNewCategory(prev => ({ ...prev, categoryCode: nextCode }));
+        }
+
         setMessage({ type: "success", text: `Category "${name}" deleted.` });
     } catch (error) {
-        console.error("Deletion error:", error);
         let errorMessage = getErrorMessage(error);
         if (error.response?.status === 404) {
             errorMessage = "Category not found or already deleted.";
@@ -130,12 +170,12 @@ const CategoryManagement = ({ onBack }) => {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setNewCategory({ name: "", categoryCode: "" });
+    const nextCode = generateNextCategoryCode(categories);
+    setNewCategory({ name: "", categoryCode: nextCode });
     setMessage({ type: "", text: "" });
   };
 
-  const hasNameError = message.type === 'error' && message.text.includes('name');
-  const hasCodeError = message.type === 'error' && message.text.includes('Code');
+  const hasNameError = message.type === 'error' && message.text.includes('Name');
 
   return (
     <div className="p-6 bg-white rounded-xl shadow-lg h-full fade-in">
@@ -152,7 +192,6 @@ const CategoryManagement = ({ onBack }) => {
         </button>
       </div>
 
-      {/* Message/Alert Display */}
       {message.text && (
         <div 
           className={`mb-6 p-4 rounded-xl flex items-start gap-3 fade-in ${
@@ -168,12 +207,11 @@ const CategoryManagement = ({ onBack }) => {
         </div>
       )}
 
-      {/* FIXED FORM SUBMISSION LOGIC */}
       <form 
         onSubmit={(e) => {
             if (editingId) {
-                e.preventDefault(); // Prevent reload
-                handleUpdateCategory(editingId); // Pass the ID from state
+                e.preventDefault();
+                handleUpdateCategory(editingId);
             } else {
                 handleAddCategory(e);
             }
@@ -195,16 +233,13 @@ const CategoryManagement = ({ onBack }) => {
             />
           </div>
           <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">2-Digit Code (CC)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Code (Auto)</label>
             <input
               type="text"
-              placeholder="e.g., 10"
-              maxLength="2"
-              className={inputStyle(hasCodeError)}
+              className="w-full px-4 py-2 border border-gray-200 bg-gray-100 rounded-lg text-gray-500 font-mono cursor-not-allowed focus:outline-none"
               value={newCategory.categoryCode}
-              onChange={(e) => setNewCategory({ ...newCategory, categoryCode: e.target.value.replace(/[^0-9]/g, '') })}
-              disabled={isFormLoading}
-              required
+              readOnly
+              title="Category Code is auto-generated"
             />
           </div>
           <div className="md:col-span-1 flex space-x-2">
@@ -235,7 +270,6 @@ const CategoryManagement = ({ onBack }) => {
         </div>
       </form>
 
-      {/* Categories List */}
       <h3 className="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2"><List className="w-5 h-5" /> Current Categories ({categories.length})</h3>
       
       {isLoading ? (
@@ -249,7 +283,7 @@ const CategoryManagement = ({ onBack }) => {
         <ul className="divide-y divide-gray-200 border rounded-xl overflow-hidden">
           <li className="p-4 bg-gray-100 font-semibold grid grid-cols-5 text-gray-700">
               <span className="col-span-3">Category Name</span>
-              <span>Category Code</span>
+              <span>Code</span>
               <span className="text-right">Actions</span>
           </li>
           {categories.map((cat) => (

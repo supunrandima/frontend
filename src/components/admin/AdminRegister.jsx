@@ -59,17 +59,15 @@ const AdminRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    // Clear error for this field when user starts typing
+
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
     }
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -110,14 +108,12 @@ const AdminRegister = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)' }}>
-      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: '#ff3131', top: '-10%', left: '-10%' }}></div>
         <div className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: '#ff914d', bottom: '-10%', right: '-10%' }}></div>
       </div>
       
       <div className="w-full max-w-2xl relative z-10">
-        {/* Header Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl shadow-lg mb-4 backdrop-blur-sm" style={{ background: 'linear-gradient(135deg, #ff3131 0%, #ff914d 100%)' }}>
             <UserPlus className="w-8 h-8 text-white" />
@@ -126,9 +122,7 @@ const AdminRegister = () => {
           <p className="text-gray-300">Create your administrator account for TasteTrek</p>
         </div>
 
-        {/* Main Form Card - Glassmorphism Design */}
         <div className="backdrop-blur-xl bg-white/10 rounded-3xl shadow-2xl p-8 border border-white/20" style={{ boxShadow: '0 8px 32px 0 rgba(255, 49, 49, 0.2)' }}>
-          {/* Alert Messages */}
           {message.text && (
             <div
               className={`mb-6 p-4 rounded-xl flex items-start gap-3 ${
@@ -153,7 +147,6 @@ const AdminRegister = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-white mb-2">
@@ -203,7 +196,6 @@ const AdminRegister = () => {
               </div>
             </div>
 
-            {/* User ID */}
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 User ID
@@ -262,7 +254,6 @@ const AdminRegister = () => {
               )}
             </div>
 
-            {/* Email and Phone Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-white mb-2">
@@ -311,7 +302,7 @@ const AdminRegister = () => {
               </div>
             </div>
 
-            {/* Address */}
+            
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 Address
@@ -335,7 +326,7 @@ const AdminRegister = () => {
               )}
             </div>
 
-            {/* Submit Button */}
+            
             <button
               type="submit"
               disabled={isLoading}
@@ -368,7 +359,7 @@ const AdminRegister = () => {
             </button>
           </form>
 
-          {/* Footer */}
+          
           <div className="mt-6 text-center text-sm text-gray-100">
             Already have an account?{" "}
             <a href="/adminLogin" className="font-semibold hover:underline" style={{ color: '#ff3131' }}>
@@ -377,7 +368,6 @@ const AdminRegister = () => {
           </div>
         </div>
 
-        {/* Bottom Info */}
         <div className="mt-6 text-center text-xs text-gray-500">
           <p>By registering, you agree to TasteTrek's Terms of Service and Privacy Policy</p>
         </div>

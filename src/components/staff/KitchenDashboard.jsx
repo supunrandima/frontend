@@ -1,132 +1,134 @@
-import React, { useState } from "react";
-import { Bell, User, ChevronDown } from "lucide-react";
-
-// Mock Data to simulate backend response
-const mockOrders = [
-  { id: 101, table: "T-04", customerId: "C-9921", items: ["Spicy Burger", "Coke", "Fries"], status: "Cooking" },
-  { id: 102, table: "T-07", customerId: "C-1234", items: ["Pasta Alfredo", "Garlic Bread"], status: "Pending" },
-  { id: 103, table: "T-01", customerId: "C-8877", items: ["Pizza", "Pepsi"], status: "Plating" },
-  { id: 104, table: "T-12", customerId: "C-5541", items: ["Steak", "Mashed Potato"], status: "Cooking" },
-];
+import React, { useState, useEffect } from 'react';
+import { getKitchenOrders, updateOrderStatus } from '../../services/kitchenService';
+import { Clock, CheckCircle, ChefHat, Bell, UtensilsCrossed, Loader2 } from 'lucide-react';
 
 const KitchenDashboard = () => {
-  const [selectedOrder, setSelectedOrder] = useState(mockOrders[0]);
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  return (
-    <div className="min-h-screen bg-[#1a1a1a] text-white font-poppins flex flex-col p-2">
-      
-      {/* 1. Header (Matches Image 2 Top Bar) */}
-      <header className="flex justify-between items-center px-6 py-3 bg-[#2d2d2d] rounded-xl mb-4 border-b border-gray-700">
-        <h1 className="text-xl font-bold text-[#FF914D]">Taste Trek</h1>
-        <div className="flex items-center gap-4">
-          <User className="w-6 h-6 text-gray-400" />
-          <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
-             <Bell className="w-5 h-5 text-gray-300" />
-          </div>
-        </div>
-      </header>
+    // Fetch orders every 5 seconds (Live Polling)
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                const response = await getKitchenOrders();
+                setOrders(response.data);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+            }
+        };
 
-      {/* Main Content Grid */}
-      <div className="flex flex-1 gap-4 overflow-hidden mb-4">
+        fetchOrders();
+        const interval = setInterval(fetchOrders, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Handle Status Change (e.g. PENDING -> PREPARING)
+    const handleStatusUpdate = async (orderId, newStatus) => {
+        // Optimistic UI Update (Update screen instantly before API responds)
+        setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o));
         
-        {/* 2. Left Panel: Ongoing Orders */}
-        <div className="flex-[2] bg-[#2d2d2d] rounded-3xl p-6 flex flex-col border border-white/5">
-          <h2 className="text-2xl font-bold mb-6">Ongoing Orders</h2>
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-            {mockOrders.map((order) => (
-              <div 
-                key={order.id}
-                onClick={() => setSelectedOrder(order)}
-                className={`w-full h-20 rounded-full cursor-pointer transition-all flex items-center px-8 justify-between
-                  ${selectedOrder.id === order.id ? 'bg-[#3d3d3d] border border-[#FF3131]/50' : 'bg-[#333333] hover:bg-[#383838]'}`}
-              >
-                <div className="h-4 w-1/3 bg-gray-500/20 rounded-full"></div> {/* Placeholder lines from image */}
-              </div>
-            ))}
-            {/* Empty placeholders to match the image look */}
-            <div className="w-full h-20 rounded-full bg-[#333333] opacity-50"></div>
-            <div className="w-full h-20 rounded-full bg-[#333333] opacity-30"></div>
-          </div>
-          {/* Scroll bar indicator mimic */}
-          <div className="absolute right-4 top-1/2 w-2 h-32 bg-gray-600 rounded-full opacity-50"></div>
+        try {
+            await updateOrderStatus(orderId, newStatus);
+        } catch (error) {
+            console.error("Failed to update status",error);
+        }
+    };
+
+    // Helper to get color based on status
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'PENDING': return 'bg-yellow-500/20 border-yellow-500 text-yellow-500';
+            case 'PREPARING': return 'bg-blue-500/20 border-blue-500 text-blue-500';
+            case 'READY': return 'bg-green-500/20 border-green-500 text-green-500';
+            default: return 'bg-gray-500/20 border-gray-500 text-gray-500';
+        }
+    };
+
+    if (loading) return (
+        <div className="min-h-screen bg-[#1a1a1a] flex justify-center items-center text-[#FF3131]">
+            <Loader2 className="w-10 h-10 animate-spin" />
         </div>
+    );
 
-        {/* 3. Right Panel: Current Order Details */}
-        <div className="flex-1 bg-[#2d2d2d] rounded-3xl p-6 flex flex-col items-center border border-white/5">
-          <h2 className="text-2xl font-bold mb-8">Current Order</h2>
-          
-          <div className="w-full flex justify-between px-4 mb-6 text-xs text-gray-400">
-            <div className="flex flex-col items-center">
-                <span>Table</span>
-                <span className="text-white text-lg font-semibold">{selectedOrder.table}</span>
-            </div>
-            <div className="flex flex-col items-center">
-                <span>Customer ID</span>
-                <span className="text-white text-lg font-semibold">{selectedOrder.customerId}</span>
-            </div>
-          </div>
+    return (
+        <div className="min-h-screen bg-[#1a1a1a] p-6 font-poppins text-white">
+            <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
+                <ChefHat className="w-10 h-10 text-[#FF914D]" /> Kitchen Display System
+            </h1>
 
-          <h3 className="text-sm font-bold mb-4">Order Items</h3>
-          <div className="w-full space-y-3 mb-8">
-            {selectedOrder.items.map((item, idx) => (
-                <div key={idx} className="w-full h-8 bg-[#3d3d3d] rounded-full"></div> // Placeholder bars
-            ))}
-            {/* Visual placeholders */}
-            <div className="w-full h-8 bg-[#3d3d3d] rounded-full opacity-50"></div> 
-            <div className="w-full h-8 bg-[#3d3d3d] rounded-full opacity-50"></div> 
-          </div>
-
-          {/* Customizations Box */}
-          <div className="w-full bg-[#444444] rounded-2xl p-4 mb-6 min-h-[100px] relative">
-            <span className="absolute top-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-300">Customizations</span>
-          </div>
-
-          {/* Order Status Stepper */}
-          <div className="mt-auto w-full">
-            <h3 className="text-center text-sm font-bold mb-4">Order Status</h3>
-            <div className="flex justify-center items-center gap-2">
-                {[1, 2, 3, 4].map((step) => (
-                    <div key={step} className="flex items-center">
-                        <div className={`w-10 h-10 rounded-full ${step <= 2 ? 'bg-[#963E2E]' : 'bg-[#963E2E] opacity-50'}`}></div>
-                        {step !== 4 && <div className="w-8 h-1 bg-[#963E2E] opacity-50"></div>}
-                    </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Bottom Panel: Ready to Serve */}
-      <div className="h-28 bg-[#2d2d2d] rounded-3xl p-4 flex items-center border border-white/5">
-        <h2 className="text-lg font-bold mr-8 min-w-[100px]">Ready to serve</h2>
-        
-        <div className="flex-1 flex gap-4 overflow-x-auto">
-            {/* Serve Item 1 */}
-            <div className="flex-1 bg-[#333333] rounded-2xl p-2 px-6 flex items-center justify-between min-w-[300px]">
-                <div className="space-y-2 w-2/3">
-                    <div className="h-3 w-full bg-gray-500/30 rounded-full"></div>
-                    <div className="h-3 w-2/3 bg-gray-500/30 rounded-full"></div>
+            {orders.length === 0 ? (
+                <div className="text-center py-20 opacity-50">
+                    <UtensilsCrossed className="w-20 h-20 mx-auto mb-4" />
+                    <p className="text-2xl">No active orders</p>
                 </div>
-                <button className="px-6 py-2 bg-[#FF5733] hover:bg-[#ff7050] text-white font-bold rounded-full transition-colors">
-                    Serve
-                </button>
-            </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {orders.map((order) => (
+                        <div key={order.orderId} className={`rounded-2xl p-5 border-2 flex flex-col h-full bg-[#2d2d2d] shadow-2xl ${getStatusColor(order.status).split(' ')[1]}`}>
+                            
+                            {/* Header */}
+                            <div className="flex justify-between items-start mb-4 border-b border-white/10 pb-3">
+                                <div>
+                                    <h2 className="text-2xl font-bold">#{order.orderId}</h2>
+                                    <div className={`text-xs font-bold px-2 py-1 rounded mt-1 inline-block ${getStatusColor(order.status)}`}>
+                                        {order.status}
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-sm font-bold text-[#FF914D]">
+                                        {order.orderType === 'TABLE' ? `Table ${order.tableNumber}` : 'Takeout'}
+                                    </div>
+                                    <div className="text-xs text-gray-400 flex items-center gap-1 mt-1 justify-end">
+                                        <Clock className="w-3 h-3" />
+                                        {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    </div>
+                                </div>
+                            </div>
 
-             {/* Serve Item 2 */}
-             <div className="flex-1 bg-[#333333] rounded-2xl p-2 px-6 flex items-center justify-between min-w-[300px]">
-                <div className="space-y-2 w-2/3">
-                    <div className="h-3 w-full bg-gray-500/30 rounded-full"></div>
-                    <div className="h-3 w-2/3 bg-gray-500/30 rounded-full"></div>
+                            {/* Items List - THIS IS THE CRITICAL FIX */}
+                            <div className="flex-1 space-y-3 mb-6">
+                                {order.items && order.items.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-center text-lg">
+                                        <span className="font-bold text-[#FF3131] w-8">{item.quantity}x</span>
+                                        <span className="flex-1 text-gray-200">{item.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="mt-auto pt-4 border-t border-white/10 grid grid-cols-1 gap-3">
+                                {order.status === 'PENDING' && (
+                                    <button 
+                                        onClick={() => handleStatusUpdate(order.orderId, 'PREPARING')}
+                                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all"
+                                    >
+                                        Start Cooking
+                                    </button>
+                                )}
+                                {order.status === 'PREPARING' && (
+                                    <button 
+                                        onClick={() => handleStatusUpdate(order.orderId, 'READY')}
+                                        className="w-full py-3 bg-green-600 hover:bg-green-500 rounded-xl font-bold transition-all"
+                                    >
+                                        Mark Ready
+                                    </button>
+                                )}
+                                {order.status === 'READY' && (
+                                    <button 
+                                        onClick={() => handleStatusUpdate(order.orderId, 'SERVED')}
+                                        className="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-xl font-bold transition-all text-gray-300"
+                                    >
+                                        Complete Order
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </div>
-                <button className="px-6 py-2 bg-[#FF5733] hover:bg-[#ff7050] text-white font-bold rounded-full transition-colors">
-                    Serve
-                </button>
-            </div>
+            )}
         </div>
-      </div>
-
-    </div>
-  );
+    );
 };
 
 export default KitchenDashboard;

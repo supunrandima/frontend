@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { loginAdmin } from "../../services/adminService.js"; // <-- FIX: Added .js extension
+import { loginAdmin } from "../../services/adminService.js"; 
 import { Eye, EyeOff, Lock, User, LogIn, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -16,13 +16,11 @@ const AdminLogin = () => {
   
   const navigate = useNavigate();
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -37,8 +35,6 @@ const AdminLogin = () => {
     try {
       const response = await loginAdmin(formData);
       
-      // The backend returns a flat structure (token, userId, firstName) 
-      // instead of a nested 'admin' object. Update storage logic accordingly.
       const { token, userId, firstName } = response.data;
       
       const adminData = { userId, firstName };
@@ -53,17 +49,14 @@ const AdminLogin = () => {
       
       setMessage({
         type: "success",
-        // Use firstName from the response if available
         text: `Welcome back, ${firstName || userId}!`,
       });
       
-      // Redirect to admin dashboard after successful login
       setTimeout(() => {
         navigate('/adminDashboard');
       }, 1500);
       
     } catch (error) {
-      // Use the 'error' field returned by the backend's ResponseEntity
       const errorMessage = error.response?.data?.error || "Login failed. Invalid User ID or password.";
       setMessage({
         type: "error",
@@ -76,14 +69,12 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)' }}>
-      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: '#ff3131', top: '-10%', left: '-10%' }}></div>
         <div className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: '#ff914d', bottom: '-10%', right: '-10%' }}></div>
       </div>
       
       <div className="w-full max-w-md relative z-10">
-        {/* Header Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl shadow-lg mb-4 backdrop-blur-sm" style={{ background: 'linear-gradient(135deg, #ff3131 0%, #ff914d 100%)' }}>
             <LogIn className="w-10 h-10 text-white" />
@@ -92,9 +83,7 @@ const AdminLogin = () => {
           <p className="text-gray-300">Sign in to your TasteTrek admin account</p>
         </div>
 
-        {/* Main Form Card - Glassmorphism Design */}
         <div className="backdrop-blur-xl bg-white/10 rounded-3xl shadow-2xl p-8 border border-white/20" style={{ boxShadow: '0 8px 32px 0 rgba(255, 49, 49, 0.2)' }}>
-          {/* Alert Messages */}
           {message.text && (
             <div
               className={`mb-6 p-4 rounded-xl flex items-start gap-3 backdrop-blur-sm ${
@@ -119,7 +108,6 @@ const AdminLogin = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* User ID */}
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 User ID
@@ -139,7 +127,6 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 Password
@@ -170,7 +157,6 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center cursor-pointer group">
                 <input
@@ -193,7 +179,6 @@ const AdminLogin = () => {
               </a>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -230,7 +215,6 @@ const AdminLogin = () => {
             </button>
           </form>
 
-          {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-white/20"></div>
@@ -242,7 +226,6 @@ const AdminLogin = () => {
             </div>
           </div>
 
-          {/* Register Link */}
           <div className="text-center">
             <a
               href="/registerAdmin"
@@ -255,7 +238,6 @@ const AdminLogin = () => {
           </div>
         </div>
 
-        {/* Bottom Info */}
         <div className="mt-6 text-center text-xs text-gray-400">
           <p>TasteTrek</p>
         </div>

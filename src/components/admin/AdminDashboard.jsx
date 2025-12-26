@@ -1,20 +1,16 @@
 // src/components/admin/AdminDashboard.jsx
-import { BarChart3, ChevronLeft, ClipboardList, LayoutDashboard, LogOut, Menu, Users, Utensils } from "lucide-react";
+import { BarChart3, ChevronLeft, ClipboardList, LayoutDashboard, LogOut, Menu, Users, Utensils, User2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// --- Imported Management Components ---
 import CategoryManagement from "./CategoryManagement";
 import StaffManagement from "./StaffManagement";
 import MenuItemManagement from "./MenuItemManagement";
 
 
-// --- Sub-Components ---
 
-// 1. Menu Management Wrapper
-// This component switches between the Item List (MenuItemManagement) and Category List (CategoryManagement)
 const MenuManagement = () => {
-  const [view, setView] = useState("items"); // 'items' or 'categories'
+  const [view, setView] = useState("items"); 
 
   if (view === "categories") {
     return <CategoryManagement onBack={() => setView("items")} />;
@@ -22,9 +18,8 @@ const MenuManagement = () => {
 
   return (
     <div className="h-full flex flex-col relative">
-      {/* Floating Switch Button */}
-      {/* Positioned absolutely to sit on top of the MenuItemManagement header */}
-      <div className="absolute top-6 right-6 z-10">
+     
+      <div className="absolute -top-6 right-1 z-10">
         <button 
           onClick={() => setView("categories")}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:text-[#FF3131] hover:border-[#FF3131]/30 transition-all"
@@ -34,13 +29,11 @@ const MenuManagement = () => {
         </button>
       </div>
 
-      {/* Main Item Manager */}
       <MenuItemManagement />
     </div>
   );
 };
 
-// 2. Customer Management Component (Placeholder)
 const CustomerManagement = () => (
   <div className="p-6 bg-white rounded-xl shadow-lg h-full">
     <h2 className="text-2xl font-bold gradient-text mb-4">Customers</h2>
@@ -51,7 +44,6 @@ const CustomerManagement = () => (
   </div>
 );
 
-// 3. Reports Component (Placeholder)
 const Reports = () => (
   <div className="p-6 bg-white rounded-xl shadow-lg h-full">
     <h2 className="text-2xl font-bold gradient-text mb-4">Sales Reports</h2>
@@ -72,7 +64,7 @@ const Reports = () => (
   </div>
 );
 
-// --- Main Dashboard Component ---
+// Main Dashboard 
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -80,7 +72,6 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear tokens and redirect
     localStorage.removeItem("adminToken");
     sessionStorage.removeItem("adminToken");
     localStorage.removeItem("adminUser");
@@ -91,8 +82,8 @@ const AdminDashboard = () => {
   const menuItems = [
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard Overview" },
     { id: "menu", icon: Utensils, label: "Menu Management" },
-    { id: "staff", icon: Users, label: "Staff Management" },
-    { id: "customer", icon: ClipboardList, label: "Customers" },
+    { id: "staff", icon: User2, label: "Staff Management" },
+    { id: "customer", icon: Users, label: "Customers" },
     { id: "reports", icon: BarChart3, label: "Reports & Analytics" },
   ];
 
@@ -112,7 +103,7 @@ const AdminDashboard = () => {
           <div className="p-6 bg-white rounded-xl shadow-lg">
             <h2 className="text-3xl font-bold gradient-text mb-4">Welcome Back, Admin!</h2>
             <p className="text-gray-600">Quick view of today's key metrics.</p>
-            {/* Quick Stats Grid */}
+          
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="card p-5 border border-red-100">
                     <p className="text-sm text-gray-500">Today's Orders</p>
@@ -128,7 +119,7 @@ const AdminDashboard = () => {
                 </div>
             </div>
             <div className="mt-8">
-              <Reports /> {/* Embed Sales Report for quick access */}
+              <Reports /> 
             </div>
           </div>
         );
@@ -138,7 +129,6 @@ const AdminDashboard = () => {
   return (
     <div className="flex min-h-screen bg-gray-100">
       
-      {/* Sidebar */}
       <div 
         className={`bg-[#2d2d2d] text-white transition-all duration-300 flex-shrink-0 ${isSidebarOpen ? 'w-64' : 'w-20'} relative z-20 shadow-xl`}
         style={{ background: 'linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%)' }}
@@ -174,7 +164,6 @@ const AdminDashboard = () => {
           ))}
         </nav>
         
-        {/* Logout Button */}
         <div className="p-4 pt-8 border-t border-gray-700">
           <button
             onClick={handleLogout}
@@ -186,7 +175,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content Area */}
+
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-semibold text-gray-800">{menuItems.find(item => item.id === activeTab)?.label || "Dashboard"}</h1>
@@ -195,7 +184,7 @@ const AdminDashboard = () => {
             </div>
         </header>
         
-        {/* Content Rendered Based on Active Tab */}
+        
         <div className="h-full">
             {renderContent()}
         </div>

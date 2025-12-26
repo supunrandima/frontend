@@ -10,10 +10,8 @@ const CustomerLogin = () => {
   
   const navigate = useNavigate();
   
-  // Handle input change
   const handleChange = (e) => {
     setPhone(e.target.value);
-    // Clear message on input change
     if (message.text) {
         setMessage({ type: "", text: "" });
     }
@@ -22,9 +20,8 @@ const CustomerLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setMessage({ type: "", text: "" }); // Clear previous messages
+    setMessage({ type: "", text: "" }); 
     
-    // Client-side phone validation (matching backend constraint: optional +, 10-15 digits)
     const phonePattern = /^[+]?[0-9]{10,15}$/; 
     if (!phone.match(phonePattern)) {
       setMessage({ type: "error", text: "Please enter a valid phone number (10-15 digits, optional +)." });
@@ -33,17 +30,14 @@ const CustomerLogin = () => {
     }
 
     try {
-      // Call the service with the phone number, which formats it as { phone: "..." }
       const response = await loginCustomer(phone);
       
-      // Save token & customer details
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("customerId", response.data.customerId); 
       localStorage.setItem("customerPhone", response.data.phone);
       
       setMessage({ type: "success", text: "Login successful! Redirecting to menu..." });
 
-      // Redirect to menu page after a short delay
       setTimeout(() => {
           navigate("/menu");
       }, 500);
@@ -51,13 +45,11 @@ const CustomerLogin = () => {
     } catch (error) {
       console.error("Login error:", error);
 
-      // Parse backend error messages
       let errorMessage = "Login failed. Please check your phone number.";
       
       if (error.response) {
         const errorData = error.response.data;
         
-        // Handle UNAUTHORIZED (401) or specific backend errors
         if ((error.response.status === 401 || error.response.status === 400) && errorData && errorData.error) {
              errorMessage = errorData.error; 
         } else {
@@ -73,23 +65,20 @@ const CustomerLogin = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)' }}>
-      {/* Animated Background Elements (Visual cohesion with Admin Login) */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: '#ff3131', top: '-10%', left: '-10%' }}></div>
         <div className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: '#ff914d', bottom: '-10%', right: '-10%' }}></div>
       </div>
       
       <div className="w-full max-w-md relative z-10">
-        {/* Header Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl shadow-lg mb-4 backdrop-blur-sm" style={{ background: 'linear-gradient(135deg, #ff3131 0%, #ff914d 100%)' }}>
-            <Phone className="w-10 h-10 text-white" />
+            <User className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">Customer Login</h1>
           <p className="text-gray-300">Sign in to TasteTrek using your phone number</p>
         </div>
 
-        {/* Main Form Card - Glassmorphism Design */}
         <div className="backdrop-blur-xl bg-white/10 rounded-3xl shadow-2xl p-8 border border-white/20" style={{ boxShadow: '0 8px 32px 0 rgba(255, 49, 49, 0.2)' }}>
           {/* Alert Messages */}
           {message.text && (

@@ -9,6 +9,10 @@ import AdminLoginPage from "./pages/adminUI/AdminLoginPage";
 import AdminDashboardPage from "./pages/adminUI/AdminDashboardPage";
 import StaffLoginPage from "./pages/staffUI/StaffLoginPage";
 import KitchenDashboard from "./components/staff/KitchenDashboard";
+import Checkout from "./components/customer/Checkout";
+import OrderHistory from "./components/customer/OrderHistory";
+import OrderStatus from "./components/customer/OrderStatus";
+// import ShoppingCart from "./components/customer/ShoppingCart";
 
 
 const App = () => {
@@ -20,11 +24,19 @@ const App = () => {
         <Route path="/registerAdmin" element={<AdminRegisterPage />} />
         <Route path="/customerLogin" element={<CustomerLoginPage />} />
         <Route path="/adminLogin" element={<AdminLoginPage />} />
-        <Route path="/menu" element={<MenuPage />} />
         <Route path="/adminDashboard" element={<AdminDashboardPage />} />
 
+        <Route path="/menu" element={<MenuPage />} />
+        {/* <Route path="/cart" element={<ShoppingCart} /> */}
+        <Route path="/checkout" element={<Checkout/>} />
+        <Route path="/checkout" element={<Checkout/>} />
+        <Route path="/order-status/:orderId" element={<OrderStatus/>} />
+        <Route path="/history" element={<OrderHistory />} />
+
+
         <Route path="/staffLogin" element={<StaffLoginPage />} />
-        <Route path="/kitchenDashboard" element={<KitchenDashboard/>} />
+        {/* <Route path="/kitchenDashboard" element={<KitchenDashboard/>} /> */}
+        <Route path="/kitchen" element={<KitchenDashboard />} />
 
       </Routes>
     </BrowserRouter>
