@@ -1,24 +1,21 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/v1/staff";
+import apiClient from "./apiClient";
 
 export const loginStaff = (credentials) => {
-  return axios.post(`${API_URL}/staffLogin`, credentials);
+  return apiClient.post("/staff/staffLogin", credentials);
 };
 
-
 export const getAllStaff = () => {
-    return axios.get(`${API_URL}/allStaffs`);
+    return apiClient.get("/staff/allStaffs");
 };
 
 export const registerStaff = (staffData) => {
-    return axios.post(`${API_URL}/registerStaff`, staffData);
+    return apiClient.post("/staff/registerStaff", staffData);
 };
 
 export const updateStaff = (id, staffData) => {
-    return axios.put(`${API_URL}/${id}`, staffData);
+    return apiClient.put(`/staff/${id}`, staffData);
 };
 
 export const deleteStaff = (id) => {
-    return axios.delete(`${API_URL}/${id}`);
+    return apiClient.delete(`/staff/${id}`);
 };

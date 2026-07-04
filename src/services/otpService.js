@@ -1,11 +1,9 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/v1/otp"; 
+import apiClient from "./apiClient";
 
 export const sendOtp = (phoneNumber) => {
-    return axios.post(`${API_URL}/send`, { phoneNumber });
+    return apiClient.post("/otp/send", { phoneNumber });
 };
 
 export const verifyOtp = (phoneNumber, code) => {
-    return axios.post(`${API_URL}/verify`, { phoneNumber, code });
+    return apiClient.post("/otp/verify", { phoneNumber, code });
 };

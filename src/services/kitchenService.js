@@ -1,13 +1,11 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/v1/order"; 
+import apiClient from "./apiClient";
 
 export const getKitchenOrders = () => {
-    return axios.get(`${API_URL}/kitchen`);
+    return apiClient.get("/order/kitchen");
 };
 
 export const updateOrderStatus = (orderId, status) => {
-    return axios.put(`${API_URL}/${orderId}/status`, null, {
+    return apiClient.put(`/order/${orderId}/status`, null, {
         params: { status }
     });
 };

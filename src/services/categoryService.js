@@ -1,34 +1,17 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/v1/admin/categories";
-
-const authHeader = () => {
-  const token =
-    localStorage.getItem("adminToken") ||
-    sessionStorage.getItem("adminToken");
-
-  return token
-    ? {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      }
-    : {};
-};
+import apiClient from "./apiClient";
 
 export const getAllCategories = () => {
-  return axios.get(`${API_URL}/allCategories`, authHeader());
+  return apiClient.get("/admin/categories/allCategories");
 };
 
 export const addCategory = (data) => {
-  return axios.post(`${API_URL}/newCategory`, data, authHeader());
+  return apiClient.post("/admin/categories/newCategory", data);
 };
 
 export const updateCategory = (id, data) => {
-  return axios.put(`${API_URL}/${id}`, data, authHeader());
+  return apiClient.put(`/admin/categories/${id}`, data);
 };
 
 export const deleteCategory = (id) => {
-  return axios.delete(`${API_URL}/${id}`, authHeader());
+  return apiClient.delete(`/admin/categories/${id}`);
 };

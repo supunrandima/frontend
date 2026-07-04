@@ -1,17 +1,9 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/v1/admin";
+import apiClient from "./apiClient";
 
 export const registerAdmin = (AdminData) => {
-  return axios.post(`${API_URL}/registerAdmin`, AdminData)
-    .catch(error => {
-      throw error; 
-    });
+  return apiClient.post("/admin/registerAdmin", AdminData);
 };
 
 export const loginAdmin = (loginData) => { 
-  return axios.post(`${API_URL}/adminLogin`, loginData) 
-    .catch(error => {
-      throw error; 
-    });
+  return apiClient.post("/admin/adminLogin", loginData);
 };

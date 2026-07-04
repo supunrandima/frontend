@@ -1,40 +1,27 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/v1/order"; 
-
-
-const authHeader = () => {
-  const token = localStorage.getItem('staffToken') || sessionStorage.getItem('staffToken');
-
-  if (token) {
-    return { 
-        headers: { 
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json' 
-        } 
-    };
-  } else {
-    return {};
-  }
-};
-
+import apiClient from "./apiClient";
 
 export const placeNewOrder = (orderData) => {
-    return axios.post(`${API_URL}/place`, orderData);
+    return apiClient.post("/order/place", orderData);
 };
 
 export const getKitchenOrders = () => {
-    return axios.get(`${API_URL}/kitchen`, authHeader());
+    return apiClient.get("/order/kitchen");
 };
 
-export const updateOrderStatus = (orderId, newStatus) => {
-    return axios.put(`${API_URL}/${orderId}/status`, { status: newStatus }, authHeader());
+export const updateOrderStatus = (orderId, status) => {
+    return apiClient.put(`/order/${orderId}/status`, null, {
+        params: { status }
+    });
 };
 
 export const getOrderStatus = (orderId) => {
-    return axios.get(`${API_URL}/${orderId}`);
+    return apiClient.get(`/order/${orderId}`);
 };
 
 export const getOrderById = (orderId) => {
-    return axios.get(`${API_URL}/${orderId}`);
+    return apiClient.get(`/order/${orderId}`);
+};
+
+export const markOrderAsPaid = (orderId) => {
+    return apiClient.put(`/order/${orderId}/mark-paid`);
 };

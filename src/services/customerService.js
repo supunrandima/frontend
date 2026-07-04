@@ -1,24 +1,9 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/v1/customer";
+import apiClient from "./apiClient";
 
 export const registerCustomer = (customerData) => {
-  return axios.post(`${API_URL}/registerCustomer`, customerData)
-    .catch(error => {
-      throw error; 
-    });
+  return apiClient.post("/customer/registerCustomer", customerData);
 };
 
 export const loginCustomer = (phone) => {
-  return axios.post(`${API_URL}/customerLogin`, { phone })
-    .catch(error => {
-      throw error; 
-    });
+  return apiClient.post("/customer/customerLogin", { phone });
 };
-
-// export const getCustomerById = (customerId,customerData) => {
-//   return axios.get(`${API_URL}/${customerId}`, { customerData })
-//     .catch(error => {
-//       throw error; // Propagate error to component
-//     });
-// };

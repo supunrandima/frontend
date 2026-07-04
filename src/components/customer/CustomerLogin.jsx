@@ -1,197 +1,178 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { loginCustomer } from "../../services/customerService.js";
-import { Phone, LogIn, CheckCircle, AlertCircle, User } from "lucide-react";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, TextField, InputAdornment, CircularProgress } from '@mui/material';
+import PhoneIcon from '@mui/icons-material/Phone';
+import { loginCustomer } from '../../services/customerService';
+import { isValidSriLankanMobileNumber } from '../../utils/validation';
+import lockscreenBg from '../../assets/lockscreen-bg.jpg';
 
 const CustomerLogin = () => {
-  const [phone, setPhone] = useState("");
-  const [message, setMessage] = useState({ type: "", text: "" });
-  const [isLoading, setIsLoading] = useState(false);
-  
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  
-  const handleChange = (e) => {
-    setPhone(e.target.value);
-    if (message.text) {
-        setMessage({ type: "", text: "" });
-    }
+
+  const handlePhoneChange = (e) => {
+    const val = e.target.value;
+    // Keep only numbers
+    const cleanVal = val.replace(/\D/g, '');
+    setPhoneNumber(cleanVal);
+    if (error) setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setMessage({ type: "", text: "" }); 
-    
-    const phonePattern = /^[+]?[0-9]{10,15}$/; 
-    if (!phone.match(phonePattern)) {
-      setMessage({ type: "error", text: "Please enter a valid phone number (10-15 digits, optional +)." });
-      setIsLoading(false);
+    if (!phoneNumber) {
+      setError('Phone number is required.');
+      return;
+    }
+    if (!isValidSriLankanMobileNumber(phoneNumber)) {
+      setError('Please enter a valid 10-digit Sri Lankan phone number (e.g. 07xxxxxxxx).');
       return;
     }
 
+    setLoading(true);
+    setError('');
+
     try {
-      const response = await loginCustomer(phone);
-      
-      localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("customerId", response.data.customerId); 
-      localStorage.setItem("customerPhone", response.data.phone);
-      
-      setMessage({ type: "success", text: "Login successful! Redirecting to menu..." });
+      const response = await loginCustomer(phoneNumber);
+      const data = response.data;
 
-      setTimeout(() => {
-          navigate("/menu");
-      }, 500);
+      // Properly save and map session information to local storage
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("customerId", data.customerId);
+      localStorage.setItem("customerName", data.customerName || "Customer");
+      localStorage.setItem("userName", data.customerName || "Customer");
+      localStorage.setItem("customerPhone", data.customerPhone || phoneNumber);
+      localStorage.setItem("userRole", "CUSTOMER");
 
-    } catch (error) {
-      console.error("Login error:", error);
-
-      let errorMessage = "Login failed. Please check your phone number.";
-      
-      if (error.response) {
-        const errorData = error.response.data;
-        
-        if ((error.response.status === 401 || error.response.status === 400) && errorData && errorData.error) {
-             errorMessage = errorData.error; 
-        } else {
-             errorMessage = `Server Error (${error.response.status}). Could not connect to API.`;
-        }
-      }
-      
-      setMessage({ type: "error", text: errorMessage });
+      navigate('/menu');
+    } catch (err) {
+      console.error('Login error:', err);
+      const errMsg = err.response?.data?.error || 'Login failed. Please register if you do not have an account.';
+      setError(errMsg);
     } finally {
-        setIsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const textFieldSx = {
+    mb: 4,
+    width: '100%',
+    '& .MuiInputBase-input': {
+      color: '#ffffff',
+      fontSize: '1rem',
+      py: 2,
+    },
+    '& .MuiInputLabel-root': {
+      color: 'rgba(255, 255, 255, 0.6)',
+      fontSize: '0.95rem',
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#FF914D',
+    },
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'rgba(255, 255, 255, 0.02)',
+      '& fieldset': {
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderRadius: '16px',
+        transition: 'all 0.3s ease-in-out',
+      },
+      '&:hover fieldset': {
+        borderColor: 'rgba(255, 255, 255, 0.25)',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#FF914D',
+        boxShadow: '0 0 12px rgba(255, 145, 77, 0.15)',
+      },
+    },
+    '& .MuiFormHelperText-root': {
+      color: '#ff4d4d',
+      fontWeight: 500,
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)' }}>
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: '#ff3131', top: '-10%', left: '-10%' }}></div>
-        <div className="absolute w-96 h-96 rounded-full opacity-20 blur-3xl" style={{ background: '#ff914d', bottom: '-10%', right: '-10%' }}></div>
-      </div>
-      
-      <div className="w-full max-w-md relative z-10">
+    <div 
+      className="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat relative p-4"
+      style={{ backgroundImage: `url(${lockscreenBg})` }}
+    >
+      {/* Dark Overlay for overlay readability */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-0"></div>
+
+      {/* Central Glassmorphic Authentication Card */}
+      <div className="relative z-10 w-full max-w-md backdrop-blur-xl bg-[#1a1a1a]/80 border border-white/10 shadow-2xl rounded-3xl p-8 md:p-10 transform transition-all duration-300">
+        
+        {/* Branding & Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl shadow-lg mb-4 backdrop-blur-sm" style={{ background: 'linear-gradient(135deg, #ff3131 0%, #ff914d 100%)' }}>
-            <User className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-2">Customer Login</h1>
-          <p className="text-gray-300">Sign in to TasteTrek using your phone number</p>
+          <Typography 
+            variant="h3" 
+            className="font-extrabold tracking-wider bg-gradient-to-r from-[#FF3131] to-[#FF914D] bg-clip-text text-transparent mb-2"
+            sx={{ fontWeight: 900 }}
+          >
+            TASTE TREK
+          </Typography>
+          <Typography className="text-gray-400 font-medium text-sm">
+            Sign in to your customer account
+          </Typography>
         </div>
 
-        <div className="backdrop-blur-xl bg-white/10 rounded-3xl shadow-2xl p-8 border border-white/20" style={{ boxShadow: '0 8px 32px 0 rgba(255, 49, 49, 0.2)' }}>
-          {/* Alert Messages */}
-          {message.text && (
-            <div
-              className={`mb-6 p-4 rounded-xl flex items-start gap-3 backdrop-blur-sm ${
-                message.type === "success"
-                  ? "bg-green-500/20 border border-green-400/30 text-green-100"
-                  : "bg-red-500/20 border border-red-400/30 text-red-100"
-              }`}
-            >
-              {message.type === "success" ? (
-                <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
-              ) : (
-                <AlertCircle className="w-5 h-5 text-red-300 flex-shrink-0 mt-0.5" />
-              )}
-              <p className="text-sm">
-                {message.text}
-              </p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Phone Number Input */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Phone Number
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-300" />
-                <input
-                  type="tel" 
-                  name="phone"
-                  placeholder="Enter your phone number"
-                  className="w-full pl-11 pr-4 py-3 backdrop-blur-sm bg-white/10 border border-white/30 rounded-xl focus:ring-2 focus:border-transparent transition-all text-white placeholder-gray-400"
-                  value={phone}
-                  onChange={handleChange}
-                  required
-                  disabled={isLoading}
-                  autoComplete="tel"
-                />
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full text-white py-3.5 rounded-xl font-semibold focus:ring-4 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
-              style={{ 
-                background: 'linear-gradient(135deg, #ff3131 0%, #ff914d 100%)',
-                boxShadow: '0 4px 15px rgba(255, 49, 49, 0.3)',
-                transform: isLoading ? 'translateY(0)' : 'translateY(0)'
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 49, 49, 0.4)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(255, 49, 49, 0.3)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  <span>Login</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/20"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 text-gray-400 backdrop-blur-sm bg-white/5 rounded-full">
-                New to TasteTrek?
-              </span>
-            </div>
+        {/* Styled Feedback Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/25 rounded-2xl text-[#ff4d4d] text-sm font-medium flex items-center justify-center text-center">
+            {error}
           </div>
+        )}
 
-          {/* Register Link */}
-          <div className="text-center">
-            <a
-              href="/CustomerRegister"
-              className="inline-flex items-center gap-2 text-sm font-medium hover:underline transition-colors"
-              style={{ color: '#ff914d' }}
-            >
-              <User className="w-4 h-4" />
-              New Customer
-            </a>
-          </div>
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="flex flex-col">
+          <TextField
+            label="Phone Number"
+            variant="outlined"
+            type="tel"
+            value={phoneNumber}
+            onChange={handlePhoneChange}
+            placeholder="07xxxxxxxx"
+            error={!!error}
+            helperText={error && error.includes('Sri Lankan') ? 'Format: 07xxxxxxxx' : ''}
+            sx={textFieldSx}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <PhoneIcon className="text-gray-400 mr-2" />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {/* Rounded submission button */}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full py-4 text-white font-bold rounded-2xl bg-gradient-to-r from-[#FF3131] to-[#FF914D] hover:from-[#FF4D4D] hover:to-[#FFA066] transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 mb-6"
+          >
+            {loading ? (
+              <CircularProgress size={24} sx={{ color: '#ffffff' }} />
+            ) : (
+              'Sign In'
+            )}
+          </button>
+        </form>
+
+        {/* Navigation Switch Option */}
+        <div className="text-center text-sm text-gray-400">
+          Don't have an account?{' '}
+          <span 
+            onClick={() => navigate('/CustomerRegister')}
+            className="text-[#FF914D] hover:text-[#FFA066] font-semibold hover:underline cursor-pointer transition-colors"
+          >
+            Sign up here
+          </span>
         </div>
 
-        {/* Bottom Info */}
-        <div className="mt-6 text-center text-xs text-gray-400">
-          <p>TasteTrek</p>
-        </div>
       </div>
     </div>
   );
-}
+};
 
-export default CustomerLogin
+export default CustomerLogin;

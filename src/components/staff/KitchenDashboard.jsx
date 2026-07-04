@@ -11,7 +11,8 @@ const KitchenDashboard = () => {
         const fetchOrders = async () => {
             try {
                 const response = await getKitchenOrders();
-                setOrders(response.data);
+                const paidOrders = response.data.filter(order => order.paymentStatus === 'PAID');
+                setOrders(paidOrders);
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching orders:", error);
@@ -74,10 +75,15 @@ const KitchenDashboard = () => {
                                     <div className={`text-xs font-bold px-2 py-1 rounded mt-1 inline-block ${getStatusColor(order.status)}`}>
                                         {order.status}
                                     </div>
+                                    {order.status === 'READY' && (
+                                        <div className="text-[10px] font-extrabold px-2 py-1 rounded mt-2 bg-red-500/20 text-red-500 border border-red-500/30 animate-pulse block text-center uppercase tracking-wide">
+                                            Waiting for Waiter Pickup
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-sm font-bold text-[#FF914D]">
-                                        {order.orderType === 'TABLE' ? `Table ${order.tableNumber}` : 'Takeout'}
+                                    <div className="text-lg font-extrabold text-[#FF914D]">
+                                        {order.tableNumber ? `Table ${order.tableNumber}` : (order.orderType === 'TABLE' ? 'Table Order' : 'Takeout')}
                                     </div>
                                     <div className="text-xs text-gray-400 flex items-center gap-1 mt-1 justify-end">
                                         <Clock className="w-3 h-3" />
@@ -112,14 +118,6 @@ const KitchenDashboard = () => {
                                         className="w-full py-3 bg-green-600 hover:bg-green-500 rounded-xl font-bold transition-all"
                                     >
                                         Mark Ready
-                                    </button>
-                                )}
-                                {order.status === 'READY' && (
-                                    <button 
-                                        onClick={() => handleStatusUpdate(order.orderId, 'SERVED')}
-                                        className="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-xl font-bold transition-all text-gray-300"
-                                    >
-                                        Complete Order
                                     </button>
                                 )}
                             </div>

@@ -21,7 +21,7 @@ const OrderHistory = () => {
 
             try {
                 // Fetch all orders in parallel
-                const promises = ids.map(id => getOrderStatus(id).catch(e => null));
+                const promises = ids.map(id => getOrderStatus(id).catch(() => null));
                 const results = await Promise.all(promises);
                 // Filter out any nulls (failed fetches)
                 setOrders(results.filter(res => res && res.data).map(res => res.data));
@@ -33,7 +33,7 @@ const OrderHistory = () => {
         };
 
         fetchHistory();
-    }, []);
+    }, [getOrderHistoryIds]);
 
     const toggleExpand = (id) => {
         setExpandedOrder(expandedOrder === id ? null : id);
