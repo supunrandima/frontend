@@ -102,7 +102,7 @@ const ShoppingCart = () => {
 
                     <button 
                         // You will navigate to a dedicated checkout component next
-                        onClick={() => navigate('/checkout')} 
+                        onClick={() => navigate('/review')} 
                         className="w-full bg-gradient-to-r from-[#FF3131] to-[#FF914D] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-all"
                     >
                         Proceed to Checkout 

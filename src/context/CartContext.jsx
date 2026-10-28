@@ -15,44 +15,39 @@ export const CartProvider = ({ children }) => {
 
    
 
-    const addToCart = (menuItem, quantity = 1) => {
+    const addToCart = (menuItem, quantity = 1, selectedCustomizations = [], specialNote = "") => {
         setCartItems(prevItems => {
-            const exists = prevItems.find(item => item.menuItemId === menuItem.itemId);
+            const cartItemId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+            const customizationsPrice = selectedCustomizations.reduce((sum, opt) => sum + (opt.additionalPrice || 0), 0);
+            const finalUnitPrice = menuItem.price + customizationsPrice;
 
-            if (exists) {
-                
-                return prevItems.map(item =>
-                    item.menuItemId === menuItem.itemId
-                        ? { ...item, quantity: item.quantity + quantity }
-                        : item
-                );
-            } else {
-                
-                return [
-                    ...prevItems,
-                    {
-                        menuItemId: menuItem.itemId,
-                        name: menuItem.name,
-                        itemCode: menuItem.itemCode,
-                        unitPrice: menuItem.price, 
-                        quantity: quantity,
-                    },
-                ];
-            }
+            return [
+                ...prevItems,
+                {
+                    cartItemId,
+                    menuItemId: menuItem.itemId,
+                    name: menuItem.name,
+                    itemCode: menuItem.itemCode,
+                    unitPrice: finalUnitPrice, 
+                    quantity: quantity,
+                    selectedCustomizations,
+                    specialNote
+                },
+            ];
         });
     };
 
-    const removeFromCart = (menuItemId) => {
-        setCartItems(prevItems => prevItems.filter(item => item.menuItemId !== menuItemId));
+    const removeFromCart = (cartItemId) => {
+        setCartItems(prevItems => prevItems.filter(item => item.cartItemId !== cartItemId));
     };
 
-    const updateQuantity = (menuItemId, newQuantity) => {
+    const updateQuantity = (cartItemId, newQuantity) => {
         setCartItems(prevItems => {
             if (newQuantity <= 0) {
-                return prevItems.filter(item => item.menuItemId !== menuItemId);
+                return prevItems.filter(item => item.cartItemId !== cartItemId);
             }
             return prevItems.map(item =>
-                item.menuItemId === menuItemId
+                item.cartItemId === cartItemId
                     ? { ...item, quantity: newQuantity }
                     : item
             );

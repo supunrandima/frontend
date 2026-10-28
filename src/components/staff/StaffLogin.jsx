@@ -25,9 +25,12 @@ const StaffLogin = () => {
       const response = await loginStaff(formData);
       
     
-      const { token, role } = response.data;
+      const { token, role, assignedStation } = response.data;
       localStorage.setItem("staffToken", token);
       localStorage.setItem("staffRole", role); 
+      if (assignedStation) {
+          localStorage.setItem("staffStation", assignedStation);
+      }
 
     
       if (role === 'ADMIN') {

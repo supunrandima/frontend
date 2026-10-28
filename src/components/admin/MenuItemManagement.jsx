@@ -12,6 +12,9 @@ const MenuItemManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [newOptionName, setNewOptionName] = useState("");
+  const [newOptionPrice, setNewOptionPrice] = useState("");
+
   const initialFormState = {
     itemId: null,
     name: "",
@@ -20,7 +23,9 @@ const MenuItemManagement = () => {
     description: "",
     price: "",
     imageUrl: "",
-    status: "Available"
+    status: "Available",
+    kitchenStation: "None",
+    customizationOptions: []
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -85,6 +90,23 @@ const MenuItemManagement = () => {
     }
   };
 
+  const handleAddOption = () => {
+    if (!newOptionName.trim()) return;
+    const price = parseFloat(newOptionPrice) || 0;
+    setFormData({
+      ...formData,
+      customizationOptions: [...(formData.customizationOptions || []), { name: newOptionName.trim(), additionalPrice: price }]
+    });
+    setNewOptionName("");
+    setNewOptionPrice("");
+  };
+
+  const handleRemoveOption = (index) => {
+    const newOptions = [...(formData.customizationOptions || [])];
+    newOptions.splice(index, 1);
+    setFormData({ ...formData, customizationOptions: newOptions });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.category || !formData.price) {
@@ -92,20 +114,32 @@ const MenuItemManagement = () => {
         return;
     }
 
+    // Explicitly construct the payload to ensure array elements strictly match Java POJO keys
+    const payload = {
+        ...formData,
+        price: parseFloat(formData.price), // Ensure price is a number
+        customizationOptions: (formData.customizationOptions || []).map(opt => ({
+            name: String(opt.name),
+            additionalPrice: parseFloat(opt.additionalPrice) || 0
+        }))
+    };
+
     setIsLoading(true);
     setMessage({ type: "", text: "" });
 
     try {
         if (isEditing) {
-            await updateMenuItem(formData.itemId, formData);
+            await updateMenuItem(formData.itemId, payload);
             setMessage({ type: "success", text: "Menu item updated successfully!" });
         } else {
-            await addMenuItem(formData);
+            await addMenuItem(payload);
             setMessage({ type: "success", text: "New menu item added successfully!" });
         }
         await fetchData(); 
         setView("list");
         setFormData(initialFormState);
+        setNewOptionName("");
+        setNewOptionPrice("");
     } catch (err) {
         setMessage({ type: "error", text: err.response?.data?.error || "Operation failed." });
     } finally {
@@ -198,6 +232,20 @@ const MenuItemManagement = () => {
                 </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Kitchen Station</label>
+                    <select name="kitchenStation" value={formData.kitchenStation} onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] bg-white outline-none">
+                        <option value="None">None</option>
+                        <option value="Grill & Wok">Grill & Wok</option>
+                        <option value="Pizza & Pasta">Pizza & Pasta</option>
+                        <option value="Salad & Dessert">Salad & Dessert</option>
+                        <option value="Beverages">Beverages</option>
+                    </select>
+                </div>
+            </div>
+
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea 
@@ -209,6 +257,43 @@ const MenuItemManagement = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none resize-none" 
                 required 
             />
+            </div>
+
+            {/* Customization Options Section */}
+            <div className="border-t pt-6 mt-6">
+                <h4 className="text-md font-bold text-gray-800 mb-3">Customization Options</h4>
+                
+                {formData.customizationOptions && formData.customizationOptions.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                        {formData.customizationOptions.map((opt, idx) => (
+                            <div key={idx} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <span className="font-medium text-gray-700">{opt.name} <span className="text-green-600 font-semibold ml-2">(+${opt.additionalPrice.toFixed(2)})</span></span>
+                                <button type="button" onClick={() => handleRemoveOption(idx)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-md transition-colors">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div className="md:col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Option Name</label>
+                        <input type="text" value={newOptionName} onChange={e => setNewOptionName(e.target.value)} placeholder="e.g., Extra Cheese" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" />
+                    </div>
+                    <div className="md:col-span-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Additional Price ($)</label>
+                        <div className="relative">
+                            <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                            <input type="number" step="0.01" value={newOptionPrice} onChange={e => setNewOptionPrice(e.target.value)} placeholder="e.g., 1.50" className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none" />
+                        </div>
+                    </div>
+                    <div className="md:col-span-1">
+                        <button type="button" onClick={handleAddOption} className="w-full bg-gray-800 text-white font-semibold py-2 rounded-lg hover:bg-black transition-colors flex justify-center items-center gap-2">
+                            <Plus className="w-4 h-4" /> Add Option
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div className="flex gap-4 pt-2">

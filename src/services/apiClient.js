@@ -19,6 +19,7 @@ apiClient.interceptors.request.use(
     } else if (
       config.url.startsWith('/staff') || 
       config.url.startsWith('/order/kitchen') || 
+      config.url.startsWith('/kitchen') || 
       (config.url.startsWith('/order/') && config.url.endsWith('/status'))
     ) {
       token = localStorage.getItem('staffToken') || sessionStorage.getItem('staffToken');

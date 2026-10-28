@@ -33,6 +33,7 @@
     "react-swipeable": "^7.0.2",
     "react-tilt": "^1.0.2",
     "react-vertical-timeline-component": "^3.5.3",
+    "recharts": "^3.9.2",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

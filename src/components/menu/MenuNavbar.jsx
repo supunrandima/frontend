@@ -1,15 +1,59 @@
+import React, { useState } from 'react';
 import { Search, ShoppingBag, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 
 const MenuNavbar = ({ onSearch }) => {
   const navigate = useNavigate();
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [tableInputValue, setTableInputValue] = useState('');
+  const [pinInput, setPinInput] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [pinError, setPinError] = useState('');
+
+  const handleCloseModal = () => {
+    setShowTableModal(false);
+    setIsAuthenticated(false);
+    setPinInput('');
+    setPinError('');
+    setTableInputValue('');
+  };
+
+  const handleVerifyPin = () => {
+    const validPin = import.meta.env.VITE_DEVICE_PIN || '1234';
+    if (pinInput === validPin) {
+      setIsAuthenticated(true);
+      setPinError('');
+    } else {
+      setPinError('Invalid Admin PIN');
+    }
+  };
+
+  const handleSaveTable = () => {
+    localStorage.setItem('DEVICE_TABLE_NUMBER', tableInputValue);
+    if (tableInputValue === '0000') {
+      alert("Device locked to Takeaway Kiosk Mode");
+    }
+    handleCloseModal();
+    window.location.reload();
+  };
 
   return (
+    <>
     <nav className="bg-[#2d2d2d] px-6 py-4 sticky top-0 z-50 shadow-xl border-b border-white/5">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         
         {/* Brand Logo */}
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+        <div 
+          className="flex items-center gap-2 cursor-pointer select-none" 
+          onClick={(e) => {
+            if (e.detail === 3) {
+              setShowTableModal(true);
+            } else {
+              navigate("/");
+            }
+          }}
+        >
           <h1 className="text-2xl font-bold gradient-text tracking-tight">TasteTrek</h1>
         </div>
 
@@ -42,6 +86,64 @@ const MenuNavbar = ({ onSearch }) => {
         </div>
       </div>
     </nav>
+
+      {/* Table Assignment Modal */}
+      <Dialog open={showTableModal} onClose={handleCloseModal}>
+        {!isAuthenticated ? (
+          <>
+            <DialogTitle>Admin Authentication Required</DialogTitle>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Admin PIN"
+                type="password"
+                fullWidth
+                variant="outlined"
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value)}
+                error={!!pinError}
+                helperText={pinError}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleVerifyPin();
+                }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseModal}>Cancel</Button>
+              <Button onClick={handleVerifyPin} variant="contained" color="primary">
+                Verify
+              </Button>
+            </DialogActions>
+          </>
+        ) : (
+          <>
+            <DialogTitle>Admin: Assign Device to Table</DialogTitle>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Table Number (0000 for Takeaway Kiosk)"
+                type="text"
+                fullWidth
+                variant="outlined"
+                value={tableInputValue}
+                onChange={(e) => setTableInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveTable();
+                }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseModal}>Cancel</Button>
+              <Button onClick={handleSaveTable} variant="contained" color="primary">
+                Save
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+    </>
   );
 };
 

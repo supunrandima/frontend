@@ -19,6 +19,7 @@ const StaffManagement = () => {
     phone: "",
     address: "",
     role: "KITCHEN", 
+    assignedStation: "All Stations",
     status: "ACTIVE"
   };
   
@@ -214,6 +215,23 @@ const StaffManagement = () => {
                     </select>
                 </div>
             </div>
+
+            {/* Assigned Station (Conditional) */}
+            {formData.role === "KITCHEN" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Assigned Station</label>
+                        <select name="assignedStation" value={formData.assignedStation} onChange={handleInputChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF3131] outline-none bg-white">
+                            <option value="All Stations">All Stations</option>
+                            <option value="Grill & Wok">Grill & Wok</option>
+                            <option value="Pizza & Pasta">Pizza & Pasta</option>
+                            <option value="Salad & Dessert">Salad & Dessert</option>
+                            <option value="Beverages">Beverages</option>
+                        </select>
+                    </div>
+                </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-4 pt-4">

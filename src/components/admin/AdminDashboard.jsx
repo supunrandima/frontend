@@ -1,11 +1,14 @@
 // src/components/admin/AdminDashboard.jsx
-import { BarChart3, ChevronLeft, ClipboardList, LayoutDashboard, LogOut, Menu, Users, Utensils, User2 } from "lucide-react";
-import { useState } from "react";
+import { BarChart3, ChevronLeft, ClipboardList, LayoutDashboard, LogOut, Menu, Users, Utensils, User2, MessageSquare } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import apiClient from "../../services/apiClient";
 
 import CategoryManagement from "./CategoryManagement";
 import StaffManagement from "./StaffManagement";
 import MenuItemManagement from "./MenuItemManagement";
+import AdminFeedbackView from "./AdminFeedbackView";
 
 
 
@@ -34,30 +37,21 @@ const MenuManagement = () => {
   );
 };
 
-const CustomerManagement = () => (
-  <div className="p-6 bg-white rounded-xl shadow-lg h-full">
-    <h2 className="text-2xl font-bold gradient-text mb-4">Customers</h2>
-    <p className="text-gray-600">View and manage customer profiles and loyalty data.</p>
-    <button className="btn-secondary mt-4 flex items-center gap-2">
-        <ClipboardList className="w-5 h-5" /> Export Data
-    </button>
-  </div>
-);
 
-const Reports = () => (
+const Reports = ({ dailyRevenue, monthlyRevenue }) => (
   <div className="p-6 bg-white rounded-xl shadow-lg h-full">
     <h2 className="text-2xl font-bold gradient-text mb-4">Sales Reports</h2>
     <p className="text-gray-600">Analyze performance with Daily and Monthly Sales reports.</p>
     
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         <div className="p-4 border rounded-xl bg-red-50/50">
-            <h3 className="text-xl font-semibold text-red-700">Daily Sales</h3>
-            <p className="text-2xl font-bold mt-2">$1,540.00</p>
-            <p className="text-sm text-gray-500">+8.5% today</p>
+            <h3 className="text-xl font-semibold text-red-700">Total Sales</h3>
+            <p className="text-2xl font-bold mt-2">{dailyRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+            <p className="text-sm text-gray-500">All-time revenue</p>
         </div>
         <div className="p-4 border rounded-xl bg-orange-50/50">
-            <h3 className="text-xl font-semibold text-orange-700">Monthly Sales</h3>
-            <p className="text-2xl font-bold mt-2">$35,200.00</p>
+            <h3 className="text-xl font-semibold text-orange-700">Recent Sales</h3>
+            <p className="text-2xl font-bold mt-2">{monthlyRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
             <p className="text-sm text-gray-500">Target 80% Achieved</p>
         </div>
     </div>
@@ -69,7 +63,33 @@ const Reports = () => (
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [metrics, setMetrics] = useState({
+    todaysOrders: 0,
+    newCustomers: 0,
+    dailyRevenue: 0,
+    monthlyRevenue: 0,
+  });
+  const [analyticsData, setAnalyticsData] = useState({
+    dailySales: [],
+    topItems: []
+  });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const [metricsResponse, analyticsResponse] = await Promise.all([
+          apiClient.get("/admin/dashboard/metrics"),
+          apiClient.get("/admin/dashboard/analytics")
+        ]);
+        setMetrics(metricsResponse.data);
+        setAnalyticsData(analyticsResponse.data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      }
+    };
+    fetchMetrics();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
@@ -94,9 +114,9 @@ const AdminDashboard = () => {
       case "staff":
         return <StaffManagement />;
       case "customer":
-        return <CustomerManagement />;
+        return <AdminFeedbackView />;
       case "reports":
-        return <Reports />;
+        return <Reports dailyRevenue={metrics.dailyRevenue} monthlyRevenue={metrics.monthlyRevenue} />;
       case "dashboard":
       default:
         return (
@@ -106,20 +126,60 @@ const AdminDashboard = () => {
           
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="card p-5 border border-red-100">
-                    <p className="text-sm text-gray-500">Today's Orders</p>
-                    <p className="text-3xl font-bold text-red-600 mt-1">45</p>
+                    <p className="text-sm text-gray-500">Total Orders</p>
+                    <p className="text-3xl font-bold text-red-600 mt-1">{metrics.todaysOrders}</p>
                 </div>
                 <div className="card p-5 border border-red-100">
-                    <p className="text-sm text-gray-500">New Customers</p>
-                    <p className="text-3xl font-bold text-red-600 mt-1">12</p>
+                    <p className="text-sm text-gray-500">Total Customers</p>
+                    <p className="text-3xl font-bold text-red-600 mt-1">{metrics.newCustomers}</p>
                 </div>
                 <div className="card p-5 border border-red-100">
                     <p className="text-sm text-gray-500">Revenue</p>
-                    <p className="text-3xl font-bold text-red-600 mt-1">$1,540</p>
+                    <p className="text-3xl font-bold text-red-600 mt-1">{metrics.dailyRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
                 </div>
             </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+              <div className="bg-white shadow rounded-xl p-6 border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Revenue Over Time (Last 7 Days)</h3>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analyticsData.dailySales}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                      <XAxis dataKey="date" tick={{fill: '#6B7280', fontSize: 12}} tickLine={false} axisLine={false} />
+                      <YAxis tick={{fill: '#6B7280', fontSize: 12}} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                        formatter={(value) => [`$${value}`, 'Revenue']}
+                      />
+                      <Line type="monotone" dataKey="totalSales" stroke="#FF3131" strokeWidth={3} dot={{r: 4, fill: '#FF3131', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 6}} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="bg-white shadow rounded-xl p-6 border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Top 5 Best-Selling Items</h3>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={analyticsData.topItems}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                      <XAxis dataKey="itemName" tick={{fill: '#6B7280', fontSize: 12}} tickLine={false} axisLine={false} />
+                      <YAxis tick={{fill: '#6B7280', fontSize: 12}} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                        formatter={(value) => [value, 'Quantity Sold']}
+                        cursor={{ fill: '#F3F4F6' }}
+                      />
+                      <Bar dataKey="quantitySold" fill="#FF3131" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
             <div className="mt-8">
-              <Reports /> 
+              <Reports dailyRevenue={metrics.dailyRevenue} monthlyRevenue={metrics.monthlyRevenue} /> 
             </div>
           </div>
         );

@@ -1,178 +1,369 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Typography, TextField, InputAdornment, CircularProgress } from '@mui/material';
-import PhoneIcon from '@mui/icons-material/Phone';
-import { loginCustomer } from '../../services/customerService';
-import { isValidSriLankanMobileNumber } from '../../utils/validation';
-import lockscreenBg from '../../assets/lockscreen-bg.jpg';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  InputAdornment,
+  CircularProgress,
+} from "@mui/material";
 
-const CustomerLogin = () => {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [error, setError] = useState('');
+import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
+import BackspaceRoundedIcon from "@mui/icons-material/BackspaceRounded";
+import RestaurantMenuRoundedIcon from "@mui/icons-material/RestaurantMenuRounded";
+
+import { loginCustomer } from "../../services/customerService";
+import { continueAsGuest } from "../../services/guestService";
+import { isValidSriLankanMobileNumber } from "../../utils/validation";
+import lockscreenBg from "../../assets/lockscreen-bg.jpg";
+
+export default function CustomerLogin() {
+  const [mobile, setMobile] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handlePhoneChange = (e) => {
-    const val = e.target.value;
-    // Keep only numbers
-    const cleanVal = val.replace(/\D/g, '');
-    setPhoneNumber(cleanVal);
-    if (error) setError('');
+  const addNumber = (num) => {
+    if (mobile.length < 10) {
+      setMobile((prev) => prev + num);
+      if (error) setError("");
+    }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!phoneNumber) {
-      setError('Phone number is required.');
+  const backspace = () => {
+    setMobile((prev) => prev.slice(0, -1));
+    if (error) setError("");
+  };
+
+  const clear = () => {
+    setMobile("");
+    if (error) setError("");
+  };
+
+  const handleContinue = async () => {
+    if (!mobile) {
+      setError("Phone number is required.");
       return;
     }
-    if (!isValidSriLankanMobileNumber(phoneNumber)) {
-      setError('Please enter a valid 10-digit Sri Lankan phone number (e.g. 07xxxxxxxx).');
+    if (!isValidSriLankanMobileNumber(mobile)) {
+      setError("Please enter a valid 10-digit phone number (e.g. 07xxxxxxxx).");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await loginCustomer(phoneNumber);
+      const response = await loginCustomer(mobile);
       const data = response.data;
 
-      // Properly save and map session information to local storage
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("customerId", data.customerId);
       localStorage.setItem("customerName", data.customerName || "Customer");
       localStorage.setItem("userName", data.customerName || "Customer");
-      localStorage.setItem("customerPhone", data.customerPhone || phoneNumber);
+      localStorage.setItem("customerPhone", data.customerPhone || mobile);
       localStorage.setItem("userRole", "CUSTOMER");
 
-      navigate('/menu');
+      navigate("/menu");
     } catch (err) {
-      console.error('Login error:', err);
-      const errMsg = err.response?.data?.error || 'Login failed. Please register if you do not have an account.';
+      console.error("Login error:", err);
+      const errMsg =
+        err.response?.data?.error ||
+        "Login failed. Please register if you do not have an account.";
       setError(errMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  const textFieldSx = {
-    mb: 4,
-    width: '100%',
-    '& .MuiInputBase-input': {
-      color: '#ffffff',
-      fontSize: '1rem',
-      py: 2,
-    },
-    '& .MuiInputLabel-root': {
-      color: 'rgba(255, 255, 255, 0.6)',
-      fontSize: '0.95rem',
-    },
-    '& .MuiInputLabel-root.Mui-focused': {
-      color: '#FF914D',
-    },
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-      '& fieldset': {
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '16px',
-        transition: 'all 0.3s ease-in-out',
-      },
-      '&:hover fieldset': {
-        borderColor: 'rgba(255, 255, 255, 0.25)',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#FF914D',
-        boxShadow: '0 0 12px rgba(255, 145, 77, 0.15)',
-      },
-    },
-    '& .MuiFormHelperText-root': {
-      color: '#ff4d4d',
-      fontWeight: 500,
+  const saveSession = (data) => {
+    localStorage.setItem("authToken", data.token);
+    localStorage.setItem("customerId", data.customerId);
+    localStorage.setItem("customerName", data.customerName);
+    localStorage.setItem("userRole", data.role || "CUSTOMER");
+    
+    if (data.customerPhone) localStorage.setItem("customerPhone", data.customerPhone);
+    else localStorage.removeItem("customerPhone");
+  };
+
+  const handleGuest = async () => {
+    try {
+      setLoading(true);
+      const response = await continueAsGuest();
+      saveSession(response.data);
+      navigate('/menu');
+    } catch (err) {
+      console.error('Guest login failed:', err);
+      navigate('/menu');
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div 
-      className="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat relative p-4"
-      style={{ backgroundImage: `url(${lockscreenBg})` }}
-    >
-      {/* Dark Overlay for overlay readability */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-0"></div>
+  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "⌫"];
 
-      {/* Central Glassmorphic Authentication Card */}
-      <div className="relative z-10 w-full max-w-md backdrop-blur-xl bg-[#1a1a1a]/80 border border-white/10 shadow-2xl rounded-3xl p-8 md:p-10 transform transition-all duration-300">
-        
-        {/* Branding & Header */}
-        <div className="text-center mb-8">
-          <Typography 
+  return (
+    <Box
+      sx={{
+        height: "100vh",
+        width: "100%",
+        backgroundImage: `linear-gradient(rgba(0,0,0,.65), rgba(0,0,0,.65)), url(${lockscreenBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        p: 3,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            width: 520,
+            borderRadius: 6,
+            p: 5,
+            background: "rgba(255,255,255,0.08)",
+            backdropFilter: "blur(18px)",
+            border: "1px solid rgba(255,255,255,.12)",
+            boxShadow: "0 20px 50px rgba(0,0,0,.4)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+        {/* Taste Trek Brand Logo */}
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
+          {/* <RestaurantMenuRoundedIcon
+            sx={{
+              fontSize: 50,
+              color: "#ff7a00",
+              mb: 0.5,
+            }}
+          /> */}
+          <Typography
             variant="h3" 
             className="font-extrabold tracking-wider bg-gradient-to-r from-[#FF3131] to-[#FF914D] bg-clip-text text-transparent mb-2"
             sx={{ fontWeight: 900 }}
           >
             TASTE TREK
           </Typography>
-          <Typography className="text-gray-400 font-medium text-sm">
-            Sign in to your customer account
-          </Typography>
-        </div>
+        </Box>
 
-        {/* Styled Feedback Error Message */}
+        <Typography
+          sx={{
+            color: "#d6d6d6",
+            fontSize: 18,
+            mb: error ? 2 : 4,
+            textAlign: "center",
+          }}
+        >
+          Enter your mobile number
+        </Typography>
+
+        {/* Error Message Display */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/25 rounded-2xl text-[#ff4d4d] text-sm font-medium flex items-center justify-center text-center">
-            {error}
-          </div>
+          <Box
+            sx={{
+              width: "100%",
+              mb: 4,
+              p: 2,
+              background: "rgba(244, 67, 54, 0.1)",
+              border: "1px solid rgba(244, 67, 54, 0.3)",
+              borderRadius: 2,
+            }}
+          >
+            <Typography
+              sx={{
+                color: "#ff4d4d",
+                fontSize: 14,
+                fontWeight: 600,
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </Typography>
+          </Box>
         )}
 
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="flex flex-col">
-          <TextField
-            label="Phone Number"
-            variant="outlined"
-            type="tel"
-            value={phoneNumber}
-            onChange={handlePhoneChange}
-            placeholder="07xxxxxxxx"
-            error={!!error}
-            helperText={error && error.includes('Sri Lankan') ? 'Format: 07xxxxxxxx' : ''}
-            sx={textFieldSx}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <PhoneIcon className="text-gray-400 mr-2" />
-                </InputAdornment>
-              ),
-            }}
-          />
+        <TextField
+          fullWidth
+          value={mobile}
+          placeholder="07XXXXXXXX"
+          InputProps={{
+            readOnly: true,
+            startAdornment: (
+              <InputAdornment position="start">
+                <PhoneRoundedIcon sx={{ color: "#ff7a00" }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            mb: 4,
+            "& .MuiOutlinedInput-root": {
+              height: 78,
+              borderRadius: 4,
+              background: "rgba(255,255,255,.08)",
+              color: "white",
+              fontSize: 30,
+              letterSpacing: 3,
+            },
+            "& input::placeholder": {
+              color: "#cfcfcf",
+              opacity: 1,
+            },
+            "& fieldset": {
+              borderColor: "rgba(255,255,255,.15)",
+            },
+          }}
+        />
 
-          {/* Rounded submission button */}
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full py-4 text-white font-bold rounded-2xl bg-gradient-to-r from-[#FF3131] to-[#FF914D] hover:from-[#FF4D4D] hover:to-[#FFA066] transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 mb-6"
-          >
-            {loading ? (
-              <CircularProgress size={24} sx={{ color: '#ffffff' }} />
-            ) : (
-              'Sign In'
-            )}
-          </button>
-        </form>
+        <Box
+          sx={{
+            width: "100%",
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 2,
+          }}
+        >
+          {keys.map((key) => (
+            <Button
+              key={key}
+              disabled={loading}
+              onClick={() => {
+                if (key === "C") clear();
+                else if (key === "⌫") backspace();
+                else addNumber(key);
+              }}
+              sx={{
+                height: 85,
+                borderRadius: 4,
+                fontSize: key === "⌫" ? 24 : 30,
+                fontWeight: "bold",
+                color: "white",
+                textTransform: "none",
+                background:
+                  key === "C"
+                    ? "#E53935"
+                    : key === "⌫"
+                    ? "#2d3436"
+                    : "rgba(255,255,255,.10)",
+                backdropFilter: "blur(12px)",
+                "&:hover": {
+                  background:
+                    key === "C"
+                      ? "#d32f2f"
+                      : key === "⌫"
+                      ? "#444"
+                      : "#ff7a00",
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 12px 25px rgba(255,122,0,.35)",
+                },
+                transition: ".25s",
+                "&.Mui-disabled": {
+                  color: "rgba(255,255,255,0.3)",
+                  background: "rgba(255,255,255,.05)",
+                },
+              }}
+            >
+              {key === "⌫" ? <BackspaceRoundedIcon /> : key}
+            </Button>
+          ))}
+        </Box>
+
+
 
         {/* Navigation Switch Option */}
-        <div className="text-center text-sm text-gray-400">
-          Don't have an account?{' '}
-          <span 
-            onClick={() => navigate('/CustomerRegister')}
-            className="text-[#FF914D] hover:text-[#FFA066] font-semibold hover:underline cursor-pointer transition-colors"
-          >
-            Sign up here
-          </span>
-        </div>
+        <Box sx={{ mt: 3, textAlign: "center" }}>
+          <Typography sx={{ color: "#cfcfcf", fontSize: 14 }}>
+            Don't have an account?{" "}
+            <Box
+              component="span"
+              onClick={() => {
+                if (!loading) navigate("/CustomerRegister");
+              }}
+              sx={{
+                color: "#ff9800",
+                fontWeight: 600,
+                cursor: loading ? "default" : "pointer",
+                "&:hover": {
+                  textDecoration: loading ? "none" : "underline",
+                },
+              }}
+            >
+              Sign up here
+            </Box>
+          </Typography>
+        </Box>
+      </Paper>
 
-      </div>
-    </div>
+      {/* Action Buttons Container */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: 350 }}>
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={handleContinue}
+          disabled={loading}
+          sx={{
+            height: 75,
+            borderRadius: 4,
+            fontSize: 22,
+            fontWeight: "bold",
+            letterSpacing: 1,
+            background: "linear-gradient(90deg,#ff6b00,#ff9800)",
+            boxShadow: "0 10px 30px rgba(255,107,0,.45)",
+            "&:hover": {
+              background: "linear-gradient(90deg,#ff7a00,#ffb300)",
+              transform: "scale(1.02)",
+            },
+            transition: ".25s",
+            "&.Mui-disabled": {
+              background: "rgba(255,255,255,0.1)",
+              color: "rgba(255,255,255,0.5)",
+            },
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={32} sx={{ color: "#ffffff" }} />
+          ) : (
+            "CONTINUE"
+          )}
+        </Button>
+
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={handleGuest}
+          disabled={loading}
+          sx={{
+            height: 75,
+            borderRadius: 4,
+            fontSize: 18,
+            fontWeight: "bold",
+            letterSpacing: 1,
+            background: "linear-gradient(90deg,#0d9488,#0f766e)",
+            boxShadow: "0 10px 30px rgba(13,148,136,.45)",
+            "&:hover": {
+              background: "linear-gradient(90deg,#14b8a6,#0d9488)",
+              transform: "scale(1.02)",
+            },
+            transition: ".25s",
+            "&.Mui-disabled": {
+              background: "rgba(255,255,255,0.1)",
+              color: "rgba(255,255,255,0.5)",
+            },
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={32} sx={{ color: "#ffffff" }} />
+          ) : (
+            "CONTINUE WITHOUT LOGIN"
+          )}
+        </Button>
+      </Box>
+    </Box>
+  </Box>
   );
-};
-
-export default CustomerLogin;
+}
